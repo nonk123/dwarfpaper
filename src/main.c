@@ -74,11 +74,11 @@ void paintSDL() {
         for (int x = 0; x < scrCols(); x++) {
             const struct chr* chr = chrAt(x, y);
 
-            SDL_FRect rect;
-            rect.x = x * CHR_WIDTH;
-            rect.y = y * CHR_HEIGHT;
-            rect.w = CHR_WIDTH;
-            rect.h = CHR_HEIGHT;
+            SDL_FRect dest;
+            dest.x = x * CHR_WIDTH;
+            dest.y = y * CHR_HEIGHT;
+            dest.w = CHR_WIDTH;
+            dest.h = CHR_HEIGHT;
 
             SDL_FRect src;
             src.x = (int)(chr->idx % 16) * CHR_WIDTH;
@@ -88,11 +88,11 @@ void paintSDL() {
 
             SDL_Color c = colors[chr->bg];
             SDL_SetRenderDrawColor(sdlRenderer, c.r, c.g, c.b, 255);
-            SDL_RenderFillRect(sdlRenderer, &rect);
+            SDL_RenderFillRect(sdlRenderer, &dest);
 
             c = colors[chr->fg];
             SDL_SetTextureColorMod(vgaTexture, c.r, c.g, c.b);
-            SDL_RenderTexture(sdlRenderer, vgaTexture, &src, &rect);
+            SDL_RenderTexture(sdlRenderer, vgaTexture, &src, &dest);
         }
 
     SDL_RenderPresent(sdlRenderer);
@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
     initClock();
     initColors();
     srand(time(NULL));
-    setMode("jumbled");
+    setMode("pipes");
 
     Assert(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS), "SDL_Init failed! %s", SDL_GetError());
 

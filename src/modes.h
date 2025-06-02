@@ -1,6 +1,7 @@
 #pragma once
 
-typedef void (*drawFn)(), (*tickFn)();
+typedef void (*drawFn)(const void*), (*tickFn)(void*);
+#define MODE_STATE_SIZE (4096)
 
 struct modeAlist {
     const char* name;
@@ -10,9 +11,9 @@ struct modeAlist {
 
 enum {
     MODE_JUMBLED,
+    MODE_PIPES,
     MODE_MAX,
 };
 
 void setMode(const char*);
-struct modeAlist* getMode();
-void modeTick();
+void modeTick(), modeForceRedraw();

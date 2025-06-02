@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -6,10 +7,12 @@
 #include "modes.h"
 #include "screen.h"
 
+#include "mode/pipes.h"
+
 #define REDRAW_DELAY (5 * CLOCK_RES)
 extern void paintSDL();
 
-static void drawJumbled() {
+static void drawJumbled(const void* _state) {
     for (int x = 0; x < scrCols(); x++)
         for (int y = 0; y < scrRows(); y++) {
             chrAt(x, y)->idx = 1 + rand() % 255;
@@ -20,16 +23,19 @@ static void drawJumbled() {
 
 static struct modeAlist modeAlist[] = {
     [MODE_JUMBLED] = {"jumbled", drawJumbled, NULL},
+    [MODE_PIPES] = {"pipes", drawPipes, tickPipes},
 };
 
 #define CUR_MODE_MAX (256)
 static char curMode[CUR_MODE_MAX] = {0};
+static uint8_t modeState[MODE_STATE_SIZE] = {0};
 
 void setMode(const char* name) {
     strncpy(curMode, name, CUR_MODE_MAX);
+    memset(modeState, 0, MODE_STATE_SIZE);
 }
 
-struct modeAlist* getMode() {
+static struct modeAlist* getMode() {
     struct modeAlist *mode = modeAlist, *const end = modeAlist + MODE_MAX;
     while (mode != end && strncmp(mode->name, curMode, CUR_MODE_MAX))
         mode++;
@@ -39,18 +45,22 @@ struct modeAlist* getMode() {
 
 void modeTick() {
     const struct modeAlist* mode = getMode();
-    if (mode->tick != NULL)
-        mode->tick();
 
     static instant lastRedraw = -128;
     const instant now = elapsed();
     if (lastRedraw < 0 || (now - lastRedraw) >= REDRAW_DELAY) {
-        mode->draw();
+        mode->draw(&modeState);
         lastRedraw = now;
         if (mode->tick == NULL)
             paintSDL();
     }
 
-    if (mode->tick != NULL)
+    if (mode->tick != NULL) {
+        mode->tick(&modeState);
         paintSDL();
+    }
+}
+
+void modeForceRedraw() {
+    getMode()->draw(&modeState);
 }

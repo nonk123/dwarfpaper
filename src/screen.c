@@ -24,11 +24,11 @@ void syncScreenSize() {
 
     if (rows != oldRows || cols != oldCols) {
         for (size_t i = 0; i < MAX_WIDTH * MAX_HEIGHT; i++) {
-            buf[i].idx = 1;
+            buf[i].idx = 0;
             buf[i].fg = C_GRAY;
             buf[i].bg = C_BLACK;
         }
-        getMode()->draw();
+        modeForceRedraw();
     }
 }
 
