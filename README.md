@@ -12,6 +12,10 @@ Run the provided binary, making sure it can read [`9x16.png`](assets/9x16.png) f
 
 TODO: publish a binary.
 
+TODO: make this app configurable rather than use hardcoded compile-time constants.
+
+TODO: add multi-monitor support.
+
 ## Building
 
 In short, run:
