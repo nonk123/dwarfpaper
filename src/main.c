@@ -68,10 +68,6 @@ static int findWorker(HWND topHandle, LPARAM topParamHandle) {
     return 1;
 }
 
-static void paint() {
-    const int scrW = scrCols() * CHR_WIDTH, scrH = scrRows() * CHR_HEIGHT;
-}
-
 static void tickDraw() {
     RECT rect;
     GetWindowRect(workerWindow, &rect);
@@ -108,15 +104,6 @@ static void tickDraw() {
         }
 
     SDL_RenderPresent(sdlRenderer);
-}
-
-static LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) {
-    if (msg == WM_PAINT) {
-        paint();
-        return 0;
-    }
-
-    return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
 // ungh....................
