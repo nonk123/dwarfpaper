@@ -5,6 +5,9 @@
 #define CHR_WIDTH (9)
 #define CHR_HEIGHT (16)
 
+#define MAX_WIDTH (420)
+#define MAX_HEIGHT (120)
+
 struct chr {
     uint8_t idx;
     uint8_t fg : 4;
