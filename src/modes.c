@@ -15,8 +15,8 @@ static void drawJumbled() {
         for (int y = 0; y < scrRows(); y++) {
             chrAt(x, y)->idx = 0;
             while (chrAt(x, y)->idx == 0)
-                chrAt(x, y)->idx = rand() % 128;
-            chrAt(x, y)->fg = rand() % 16;
+                chrAt(x, y)->idx = rand() % 256;
+            chrAt(x, y)->fg = 1 + rand() % 15;
             chrAt(x, y)->bg = C_BLACK;
         }
 }
@@ -27,8 +27,6 @@ static struct modeAlist modeAlist[] = {
 
 #define CUR_MODE_MAX (256)
 static char curMode[CUR_MODE_MAX] = {0};
-
-static instant lastRedraw = -1;
 
 void setMode(const char* name) {
     strncpy(curMode, name, CUR_MODE_MAX);
@@ -47,6 +45,7 @@ void modeTick() {
     const struct modeAlist* mode = getMode();
     mode->tick();
 
+    static instant lastRedraw = -1;
     const instant now = elapsed();
     if (lastRedraw == -1 || (now - lastRedraw) >= REDRAW_DELAY) {
         mode->draw();
