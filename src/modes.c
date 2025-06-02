@@ -7,8 +7,7 @@
 #include "screen.h"
 
 #define REDRAW_DELAY (5 * CLOCK_RES)
-
-static void nilTick() {}
+extern void paintSDL();
 
 static void drawJumbled() {
     for (int x = 0; x < scrCols(); x++)
@@ -20,7 +19,7 @@ static void drawJumbled() {
 }
 
 static struct modeAlist modeAlist[] = {
-    [MODE_JUMBLED] = {"jumbled", drawJumbled, nilTick},
+    [MODE_JUMBLED] = {"jumbled", drawJumbled, NULL},
 };
 
 #define CUR_MODE_MAX (256)
@@ -41,12 +40,18 @@ struct modeAlist* getMode() {
 
 void modeTick() {
     const struct modeAlist* mode = getMode();
-    mode->tick();
+    if (mode->tick != NULL)
+        mode->tick();
 
     static instant lastRedraw = -1;
     const instant now = elapsed();
     if (lastRedraw == -1 || (now - lastRedraw) >= REDRAW_DELAY) {
         mode->draw();
         lastRedraw = now;
+        if (mode->tick == NULL)
+            paintSDL();
     }
+
+    if (mode->tick != NULL)
+        paintSDL();
 }

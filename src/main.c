@@ -66,7 +66,7 @@ static int findWorker(HWND topHandle, LPARAM topParamHandle) {
     return 1;
 }
 
-static void paint() {
+void paintSDL() {
     SDL_SetRenderDrawColor(sdlRenderer, 0, 0, 0, 255);
     SDL_RenderClear(sdlRenderer);
 
@@ -156,7 +156,6 @@ int main(int argc, char* argv[]) {
         scrResize(rect.right - rect.left + 1, rect.bottom - rect.top + 1);
 
         modeTick();
-        paint();
 
         instant thisUpdate = elapsed(), delta = thisUpdate - lastUpdate;
 
