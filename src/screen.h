@@ -14,9 +14,7 @@ struct chr {
     uint8_t bg : 4;
 };
 
-void syncScreenSize();
 int scrCols(), scrRows(), scrWidth(), scrHeight();
-
 struct chr* chrAt(int, int);
 
 // Straight outta <https://github.com/nonk123/micraneft2>:

@@ -2,14 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "clock.h"
 #include "log.h"
 #include "modes.h"
 #include "screen.h"
 
 #include "mode/pipes.h"
 
-#define REDRAW_DELAY (5 * CLOCK_RES)
 extern void paintSDL();
 
 static void drawJumbled(const void* _state) {
@@ -45,20 +43,10 @@ static struct modeAlist* getMode() {
 
 void modeTick() {
     const struct modeAlist* mode = getMode();
-
-    static instant lastRedraw = -128;
-    const instant now = elapsed();
-    if (lastRedraw < 0 || (now - lastRedraw) >= REDRAW_DELAY) {
-        mode->draw(&modeState);
-        lastRedraw = now;
-        if (mode->tick == NULL)
-            paintSDL();
-    }
-
-    if (mode->tick != NULL) {
+    mode->draw(&modeState);
+    if (mode->tick != NULL)
         mode->tick(&modeState);
-        paintSDL();
-    }
+    paintSDL();
 }
 
 void modeForceRedraw() {
