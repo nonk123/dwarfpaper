@@ -61,7 +61,7 @@ void tickPipes(void* _state) {
             pipe->y = rand() % scrRows();
             pipe->active = !(rand() % PIPE_ACTIVE_FREQ);
             pipe->dir = rand() % 4;
-            pipe->color = 8 + rand() % 8;
+            pipe->color = 9 + rand() % 7;
         }
     }
     if (!state->init) {
