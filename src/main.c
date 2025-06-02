@@ -72,11 +72,6 @@ static void paint() {
     const int scrW = scrCols() * CHR_WIDTH, scrH = scrRows() * CHR_HEIGHT;
 }
 
-static void setColor(uint8_t idx) {
-    SDL_Color c = colors[idx];
-    SDL_SetRenderDrawColor(sdlRenderer, c.r, c.g, c.b, 255);
-}
-
 static void tickDraw() {
     RECT rect;
     GetWindowRect(workerWindow, &rect);
@@ -103,10 +98,12 @@ static void tickDraw() {
             src.w = CHR_WIDTH;
             src.h = CHR_HEIGHT;
 
-            setColor(chr->bg);
+            SDL_Color c = colors[chr->bg];
+            SDL_SetRenderDrawColor(sdlRenderer, c.r, c.g, c.b, 255);
             SDL_RenderFillRect(sdlRenderer, &rect);
 
-            setColor(chr->fg);
+            c = colors[chr->fg];
+            SDL_SetTextureColorMod(vgaTexture, c.r, c.g, c.b);
             SDL_RenderTexture(sdlRenderer, vgaTexture, &src, &rect);
         }
 
