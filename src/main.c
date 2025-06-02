@@ -1,8 +1,8 @@
+#include <time.h>
+
 #include <windows.h>
 #include <wingdi.h>
 #include <winuser.h>
-
-#include <time.h>
 
 #include "stb_image.h"
 
@@ -15,8 +15,6 @@
 #include "SDL3/SDL_video.h"
 
 #include "clock.h"
-extern void clockInit();
-
 #include "log.h"
 #include "modes.h"
 #include "screen.h"
@@ -100,10 +98,9 @@ static void paint() {
     SDL_RenderPresent(sdlRenderer);
 }
 
-// ungh....................
 int main(int argc, char* argv[]) {
+    initClock();
     srand(time(NULL));
-    clockInit();
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
         Fatal("SDL_Init failed!");
@@ -132,9 +129,6 @@ int main(int argc, char* argv[]) {
     SetParent(mainWindow, workerWindow);
     ShowWindow(workerWindow, 1);
 
-    initColors();
-    setMode("jumbled");
-
     int d1, d2, n;
     uint8_t* vgaData = stbi_load("9x16.png", &d1, &d2, &n, 0);
     if (vgaData == NULL)
@@ -142,6 +136,9 @@ int main(int argc, char* argv[]) {
 
     SDL_Surface* vgaSurface = SDL_CreateSurfaceFrom(144, 256, SDL_PIXELFORMAT_RGBA8888, vgaData, 144 * 4);
     vgaTexture = SDL_CreateTextureFromSurface(sdlRenderer, vgaSurface);
+
+    initColors();
+    setMode("jumbled");
 
     Info("Starting...");
 

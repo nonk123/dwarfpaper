@@ -13,9 +13,7 @@ static void nilTick() {}
 static void drawJumbled() {
     for (int x = 0; x < scrCols(); x++)
         for (int y = 0; y < scrRows(); y++) {
-            chrAt(x, y)->idx = 0;
-            while (chrAt(x, y)->idx == 0)
-                chrAt(x, y)->idx = rand() % 256;
+            chrAt(x, y)->idx = 1 + rand() % 255;
             chrAt(x, y)->fg = 1 + rand() % 15;
             chrAt(x, y)->bg = C_BLACK;
         }

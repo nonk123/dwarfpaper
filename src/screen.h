@@ -20,7 +20,7 @@ int scrRows(), scrCols();
 
 struct chr* chrAt(int, int);
 
-// Straight outta <https://github.com/nonk123/conge>:
+// Straight outta <https://github.com/nonk123/micraneft2>:
 
 enum {
     C_BLACK,
