@@ -26,7 +26,8 @@ static SDL_Window* sdlWindow = NULL;
 static SDL_Renderer* sdlRenderer = NULL;
 static SDL_Texture* vgaTexture = NULL;
 
-#define REFRESH_RATE (1)
+#define REDRAW_DELAY (CLOCK_RES * 5)
+#define UPDATE_RATE (60)
 
 static SDL_Color colors[16] = {0};
 
@@ -68,13 +69,7 @@ static int findWorker(HWND topHandle, LPARAM topParamHandle) {
     return 1;
 }
 
-static void tickDraw() {
-    RECT rect;
-    GetWindowRect(workerWindow, &rect);
-    scrResize(rect.right - rect.left + 1, rect.bottom - rect.top + 1);
-
-    drawRandom(); // TODO: customize the mode
-
+static void paint() {
     SDL_SetRenderDrawColor(sdlRenderer, 0, 0, 0, 255);
     SDL_RenderClear(sdlRenderer);
 
@@ -150,7 +145,8 @@ int main(int argc, char* argv[]) {
 
     Info("Starting...");
 
-    instant lastDraw = elapsed();
+    instant lastUpdate = elapsed(), lastRedraw = elapsed() - REDRAW_DELAY;
+
     for (;;) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
@@ -158,24 +154,28 @@ int main(int argc, char* argv[]) {
                 goto cleanup;
         }
 
-        tickDraw();
+        RECT rect;
+        GetWindowRect(workerWindow, &rect);
+        scrResize(rect.right - rect.left + 1, rect.bottom - rect.top + 1);
 
-        MSG msg;
-        while (PeekMessageW(&msg, workerWindow, 0, 0, PM_REMOVE)) {
-            TranslateMessage(&msg);
-            DispatchMessageW(&msg);
+        instant thisRedraw = elapsed();
+        if (thisRedraw - lastRedraw >= REDRAW_DELAY) {
+            redraw();
+            lastRedraw = elapsed();
         }
 
-        instant thisDraw = elapsed(), delta = thisDraw - lastDraw;
+        paint();
 
-#define TARGET_DELTA (CLOCK_RES / REFRESH_RATE)
+        instant thisUpdate = elapsed(), delta = thisUpdate - lastUpdate;
+
+#define TARGET_DELTA (CLOCK_RES / UPDATE_RATE)
         if (delta < TARGET_DELTA) {
             msSleep((TARGET_DELTA - delta) / (CLOCK_RES / 1000));
             delta = TARGET_DELTA;
         }
 #undef TARGET_DELTA
 
-        lastDraw += delta;
+        lastUpdate += delta;
     }
 
 cleanup:

@@ -3,6 +3,10 @@
 #include "modes.h"
 #include "screen.h"
 
+void redraw() {
+    drawRandom(); // TODO: select mode somehow
+}
+
 void drawRandom() {
     for (int x = 0; x < scrCols(); x++)
         for (int y = 0; y < scrRows(); y++) {
