@@ -21,7 +21,7 @@ extern void clockInit();
 #include "modes.h"
 #include "screen.h"
 
-static HWND progman = NULL, workerWindow = NULL, mainWindow = NULL;
+static HWND workerWindow = NULL;
 static SDL_Window* sdlWindow = NULL;
 static SDL_Renderer* sdlRenderer = NULL;
 static SDL_Texture* vgaTexture = NULL;
@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
         Fatal("SDL_Init failed!");
 
-    progman = FindWindow("Progman", NULL);
+    HWND progman = FindWindow("Progman", NULL);
     if (progman == NULL)
         Fatal("Failed to find the Progman window!");
 
@@ -123,8 +123,6 @@ int main(int argc, char* argv[]) {
 
     if (workerWindow == NULL)
         Fatal("Failed to find the Worker window!!!");
-
-    HMODULE hInstance = GetModuleHandle(NULL);
 
     RECT rect;
     GetWindowRect(workerWindow, &rect);
@@ -135,7 +133,8 @@ int main(int argc, char* argv[]) {
         ))
         Fatal("Failed to create the SDL window!!!");
 
-    mainWindow = SDL_GetPointerProperty(SDL_GetWindowProperties(sdlWindow), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+    HWND mainWindow =
+        SDL_GetPointerProperty(SDL_GetWindowProperties(sdlWindow), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
     SetParent(mainWindow, workerWindow);
     ShowWindow(workerWindow, 1);
 
