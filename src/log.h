@@ -34,6 +34,11 @@ extern int gLogLevel;
         Log(LOG_FATAL, __VA_ARGS__);                                                                                   \
         commitSeppuku();                                                                                               \
     } while (0)
+#define Assert(expr, ...)                                                                                              \
+    do {                                                                                                               \
+        if (!(expr))                                                                                                   \
+            Fatal(__VA_ARGS__);                                                                                        \
+    } while (0)
 
 const char* fmtLogLevel(int);
 const char* srcBasename(const char*);

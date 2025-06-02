@@ -6,8 +6,8 @@
 
 #include "stb_image.h"
 
+#include "SDL3/SDL_error.h"
 #include "SDL3/SDL_init.h"
-#include "SDL3/SDL_main.h"
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_properties.h"
 #include "SDL3/SDL_render.h"
@@ -101,41 +101,40 @@ void paintSDL() {
 int main(int argc, char* argv[]) {
     initClock();
     srand(time(NULL));
-
-    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
-        Fatal("SDL_Init failed!");
+    Assert(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS), "SDL_Init failed! %s", SDL_GetError());
 
     HWND progman = FindWindow("Progman", NULL);
-    if (progman == NULL)
-        Fatal("Failed to find the Progman window!");
+    Assert(progman != NULL, "Failed to find the Progman window!");
 
     SendMessage(progman, 0x052C, 0, 0);
     EnumWindows(findWorker, 0);
-
-    if (workerWindow == NULL)
-        Fatal("Failed to find the Worker window!!!");
+    Assert(workerWindow != NULL, "Failed to find the Worker window!!!");
 
     RECT rect;
     GetWindowRect(workerWindow, &rect);
 
-    if (!SDL_CreateWindowAndRenderer(
+    Assert(
+        SDL_CreateWindowAndRenderer(
             "dwarfpaper", rect.right - rect.left + 1, rect.bottom - rect.top + 1,
             SDL_WINDOW_BORDERLESS | SDL_WINDOW_FULLSCREEN, &sdlWindow, &sdlRenderer
-        ))
-        Fatal("Failed to create the SDL window!!!");
+        ),
+        "Failed to create the SDL window/renderer!!! %s", SDL_GetError()
+    );
 
     HWND mainWindow =
         SDL_GetPointerProperty(SDL_GetWindowProperties(sdlWindow), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
     SetParent(mainWindow, workerWindow);
-    ShowWindow(workerWindow, 1);
+    ShowWindow(workerWindow, 1); // !!! won't do jackshit without this
 
     int d1, d2, n;
-    uint8_t* vgaData = stbi_load("9x16.png", &d1, &d2, &n, 0);
-    if (vgaData == NULL)
-        Fatal("Failed to load the VGA 9x16 font PNG");
+    uint8_t* vgaData = stbi_load("9x16.png", &d1, &d2, &n, 4);
+    Assert(vgaData != NULL, "Failed to load the VGA 9x16 font PNG");
 
     SDL_Surface* vgaSurface = SDL_CreateSurfaceFrom(144, 256, SDL_PIXELFORMAT_RGBA8888, vgaData, 144 * 4);
+    Assert(vgaSurface != NULL, "Failed to create the VGA 9x16 font surface!!! %s", SDL_GetError());
+
     vgaTexture = SDL_CreateTextureFromSurface(sdlRenderer, vgaSurface);
+    Assert(vgaTexture != NULL, "Failed to load the VGA 9x16 font texture!!! %s", SDL_GetError());
 
     initColors();
     setMode("jumbled");

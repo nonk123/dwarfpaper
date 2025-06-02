@@ -30,11 +30,10 @@ void setMode(const char* name) {
 }
 
 struct modeAlist* getMode() {
-    struct modeAlist *mode = modeAlist, *end = modeAlist + MODE_MAX;
+    struct modeAlist *mode = modeAlist, *const end = modeAlist + MODE_MAX;
     while (mode != end && strncmp(mode->name, curMode, CUR_MODE_MAX))
         mode++;
-    if (mode == end)
-        Fatal("Unknown wallpaper mode: %s", curMode);
+    Assert(mode != end, "Unknown wallpaper mode: %s", curMode);
     return mode;
 }
 
