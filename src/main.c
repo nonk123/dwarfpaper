@@ -100,7 +100,10 @@ void paintSDL() {
 
 int main(int argc, char* argv[]) {
     initClock();
+    initColors();
     srand(time(NULL));
+    setMode("jumbled");
+
     Assert(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS), "SDL_Init failed! %s", SDL_GetError());
 
     HWND progman = FindWindow("Progman", NULL);
@@ -114,12 +117,21 @@ int main(int argc, char* argv[]) {
     GetWindowRect(workerWindow, &rect);
 
     Assert(
-        SDL_CreateWindowAndRenderer(
-            "dwarfpaper", rect.right - rect.left + 1, rect.bottom - rect.top + 1,
-            SDL_WINDOW_BORDERLESS | SDL_WINDOW_FULLSCREEN, &sdlWindow, &sdlRenderer
-        ),
+        SDL_CreateWindowAndRenderer("dwarfpaper", 1, 1, SDL_WINDOW_FULLSCREEN, &sdlWindow, &sdlRenderer),
         "Failed to create the SDL window/renderer!!! %s", SDL_GetError()
     );
+
+    syncScreenSize();
+    Assert(SDL_SetWindowPosition(sdlWindow, 0, 0), "Failed to set the SDL window position! %s", SDL_GetError());
+    Assert(
+        SDL_SetWindowSize(sdlWindow, scrWidth(), scrHeight()), "Failed to set the SDL window size! %s", SDL_GetError()
+    );
+    Assert(SDL_SyncWindow(sdlWindow), "Failed to sync SDL window! %s", SDL_GetError());
+
+    // Flush the whole buffer so at the next redraw we won't get a black screen....
+    SDL_SetRenderDrawColor(sdlRenderer, 0, 0, 0, 255);
+    SDL_RenderClear(sdlRenderer);
+    SDL_RenderPresent(sdlRenderer);
 
     HWND mainWindow =
         SDL_GetPointerProperty(SDL_GetWindowProperties(sdlWindow), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
@@ -136,9 +148,6 @@ int main(int argc, char* argv[]) {
     vgaTexture = SDL_CreateTextureFromSurface(sdlRenderer, vgaSurface);
     Assert(vgaTexture != NULL, "Failed to load the VGA 9x16 font texture!!! %s", SDL_GetError());
 
-    initColors();
-    setMode("jumbled");
-
     Info("Starting...");
 
     instant lastUpdate = elapsed();
@@ -150,10 +159,7 @@ int main(int argc, char* argv[]) {
                 goto cleanup;
         }
 
-        RECT rect;
-        GetWindowRect(workerWindow, &rect);
-        scrResize(rect.right - rect.left + 1, rect.bottom - rect.top + 1);
-
+        syncScreenSize();
         modeTick();
 
         instant thisUpdate = elapsed(), delta = thisUpdate - lastUpdate;

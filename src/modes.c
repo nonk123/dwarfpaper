@@ -42,9 +42,9 @@ void modeTick() {
     if (mode->tick != NULL)
         mode->tick();
 
-    static instant lastRedraw = -1;
+    static instant lastRedraw = -128;
     const instant now = elapsed();
-    if (lastRedraw == -1 || (now - lastRedraw) >= REDRAW_DELAY) {
+    if (lastRedraw < 0 || (now - lastRedraw) >= REDRAW_DELAY) {
         mode->draw();
         lastRedraw = now;
         if (mode->tick == NULL)

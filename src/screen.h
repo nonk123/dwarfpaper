@@ -14,9 +14,8 @@ struct chr {
     uint8_t bg : 4;
 };
 
-// Resize the ASCII buffer to match the given window size in px.
-void scrResize(int, int);
-int scrRows(), scrCols();
+void syncScreenSize();
+int scrCols(), scrRows(), scrWidth(), scrHeight();
 
 struct chr* chrAt(int, int);
 
