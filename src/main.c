@@ -120,7 +120,7 @@ int main(int argc, char* argv[]) {
 
     if (!SDL_CreateWindowAndRenderer(
             "dwarfpaper", rect.right - rect.left + 1, rect.bottom - rect.top + 1,
-            SDL_WINDOW_MAXIMIZED | SDL_WINDOW_BORDERLESS, &sdlWindow, &sdlRenderer
+            SDL_WINDOW_BORDERLESS | SDL_WINDOW_FULLSCREEN, &sdlWindow, &sdlRenderer
         ))
         Fatal("Failed to create the SDL window!!!");
 
