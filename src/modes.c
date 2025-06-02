@@ -1,17 +1,55 @@
 #include <stdlib.h>
+#include <string.h>
 
+#include "clock.h"
+#include "log.h"
 #include "modes.h"
 #include "screen.h"
 
-void redraw() {
-    drawRandom(); // TODO: select mode somehow
-}
+#define REDRAW_DELAY (5 * CLOCK_RES)
 
-void drawRandom() {
+static void nilTick() {}
+
+static void drawJumbled() {
     for (int x = 0; x < scrCols(); x++)
         for (int y = 0; y < scrRows(); y++) {
-            const int r = rand() & 1;
-            chrAt(x, y)->fg = r ? C_BLACK : C_RED;
-            chrAt(x, y)->bg = r ? C_AQUA : C_BLACK;
+            chrAt(x, y)->idx = 0;
+            while (chrAt(x, y)->idx == 0)
+                chrAt(x, y)->idx = rand() % 128;
+            chrAt(x, y)->fg = rand() % 16;
+            chrAt(x, y)->bg = C_BLACK;
         }
+}
+
+static struct modeAlist modeAlist[] = {
+    [MODE_JUMBLED] = {"jumbled", drawJumbled, nilTick},
+};
+
+#define CUR_MODE_MAX (256)
+static char curMode[CUR_MODE_MAX] = {0};
+
+static instant lastRedraw = -1;
+
+void setMode(const char* name) {
+    strncpy(curMode, name, CUR_MODE_MAX);
+}
+
+struct modeAlist* getMode() {
+    struct modeAlist *mode = modeAlist, *end = modeAlist + MODE_MAX;
+    while (mode != end && strncmp(mode->name, curMode, CUR_MODE_MAX))
+        mode++;
+    if (mode == end)
+        Fatal("Unknown wallpaper mode: %s", curMode);
+    return mode;
+}
+
+void modeTick() {
+    const struct modeAlist* mode = getMode();
+    mode->tick();
+
+    const instant now = elapsed();
+    if (lastRedraw == -1 || (now - lastRedraw) >= REDRAW_DELAY) {
+        mode->draw();
+        lastRedraw = now;
+    }
 }

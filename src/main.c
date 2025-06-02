@@ -26,7 +26,6 @@ static SDL_Window* sdlWindow = NULL;
 static SDL_Renderer* sdlRenderer = NULL;
 static SDL_Texture* vgaTexture = NULL;
 
-#define REDRAW_DELAY (CLOCK_RES * 5)
 #define UPDATE_RATE (60)
 
 static SDL_Color colors[16] = {0};
@@ -134,6 +133,7 @@ int main(int argc, char* argv[]) {
     ShowWindow(workerWindow, 1);
 
     initColors();
+    setMode("jumbled");
 
     int d1, d2, n;
     uint8_t* vgaData = stbi_load("9x16.png", &d1, &d2, &n, 0);
@@ -145,7 +145,7 @@ int main(int argc, char* argv[]) {
 
     Info("Starting...");
 
-    instant lastUpdate = elapsed(), lastRedraw = elapsed() - REDRAW_DELAY;
+    instant lastUpdate = elapsed();
 
     for (;;) {
         SDL_Event event;
@@ -158,12 +158,7 @@ int main(int argc, char* argv[]) {
         GetWindowRect(workerWindow, &rect);
         scrResize(rect.right - rect.left + 1, rect.bottom - rect.top + 1);
 
-        instant thisRedraw = elapsed();
-        if (thisRedraw - lastRedraw >= REDRAW_DELAY) {
-            redraw();
-            lastRedraw = elapsed();
-        }
-
+        modeTick();
         paint();
 
         instant thisUpdate = elapsed(), delta = thisUpdate - lastUpdate;

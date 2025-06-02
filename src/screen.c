@@ -26,7 +26,7 @@ void scrResize(int windW, int windH) {
             buf[i].fg = C_GRAY;
             buf[i].bg = C_BLACK;
         }
-        redraw();
+        getMode()->draw();
     }
 }
 
