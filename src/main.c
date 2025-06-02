@@ -8,8 +8,10 @@
 
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_main.h"
+#include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_properties.h"
 #include "SDL3/SDL_render.h"
+#include "SDL3/SDL_surface.h"
 #include "SDL3/SDL_video.h"
 
 #include "clock.h"
@@ -22,46 +24,41 @@ extern void clockInit();
 static HWND progman = NULL, workerWindow = NULL, mainWindow = NULL;
 static SDL_Window* sdlWindow = NULL;
 static SDL_Renderer* sdlRenderer = NULL;
+static SDL_Texture* vgaTexture = NULL;
 
 #define REFRESH_RATE (1)
 
-static uint8_t* vgaData = NULL;
-static HBRUSH brushes[16] = {0};
+static SDL_Color colors[16] = {0};
 
-static void initBrushes() {
+static void initColors() {
 #define FULL (255)
 #define MID (170)
 #define LOW (85)
-    brushes[C_BLACK] = CreateSolidBrush(RGB(0, 0, 0));
-    brushes[C_GRAY] = CreateSolidBrush(RGB(LOW, LOW, LOW));
-    brushes[C_WHITE] = CreateSolidBrush(RGB(MID, MID, MID));
-    brushes[C_BRIGHT_WHITE] = CreateSolidBrush(RGB(FULL, FULL, FULL));
+    colors[C_BLACK] = (SDL_Color){0, 0, 0, 255};
+    colors[C_GRAY] = (SDL_Color){LOW, LOW, LOW, 255};
+    colors[C_WHITE] = (SDL_Color){MID, MID, MID, 255};
+    colors[C_BRIGHT_WHITE] = (SDL_Color){FULL, FULL, FULL, 255};
 
-    brushes[C_RED] = CreateSolidBrush(RGB(MID, 0, 0));
-    brushes[C_BRIGHT_RED] = CreateSolidBrush(RGB(FULL, LOW, LOW));
+    colors[C_RED] = (SDL_Color){MID, 0, 0, 255};
+    colors[C_BRIGHT_RED] = (SDL_Color){FULL, LOW, LOW, 255};
 
-    brushes[C_GREEN] = CreateSolidBrush(RGB(0, MID, 0));
-    brushes[C_BRIGHT_GREEN] = CreateSolidBrush(RGB(LOW, FULL, LOW));
+    colors[C_GREEN] = (SDL_Color){0, MID, 0, 255};
+    colors[C_BRIGHT_GREEN] = (SDL_Color){LOW, FULL, LOW, 255};
 
-    brushes[C_YELLOW] = CreateSolidBrush(RGB(FULL, MID, 0));
-    brushes[C_BRIGHT_YELLOW] = CreateSolidBrush(RGB(FULL, FULL, LOW));
+    colors[C_YELLOW] = (SDL_Color){FULL, MID, 0, 255};
+    colors[C_BRIGHT_YELLOW] = (SDL_Color){FULL, FULL, LOW, 255};
 
-    brushes[C_BLUE] = CreateSolidBrush(RGB(0, 0, MID));
-    brushes[C_BRIGHT_BLUE] = CreateSolidBrush(RGB(LOW, LOW, FULL));
+    colors[C_BLUE] = (SDL_Color){0, 0, MID, 255};
+    colors[C_BRIGHT_BLUE] = (SDL_Color){LOW, LOW, FULL, 255};
 
-    brushes[C_PURPLE] = CreateSolidBrush(RGB(MID, 0, MID));
-    brushes[C_BRIGHT_PURPLE] = CreateSolidBrush(RGB(FULL, LOW, FULL));
+    colors[C_PURPLE] = (SDL_Color){MID, 0, MID, 255};
+    colors[C_BRIGHT_PURPLE] = (SDL_Color){FULL, LOW, FULL, 255};
 
-    brushes[C_AQUA] = CreateSolidBrush(RGB(0, MID, MID));
-    brushes[C_BRIGHT_AQUA] = CreateSolidBrush(RGB(LOW, FULL, FULL));
+    colors[C_AQUA] = (SDL_Color){0, MID, MID, 255};
+    colors[C_BRIGHT_AQUA] = (SDL_Color){LOW, FULL, FULL, 255};
 #undef LOW
 #undef MID
 #undef FULL
-}
-
-static void freeBrushes() {
-    for (size_t i = 0; i < 16; i++)
-        DeleteObject(brushes[i]);
 }
 
 static int findWorker(HWND topHandle, LPARAM topParamHandle) {
@@ -75,6 +72,11 @@ static void paint() {
     const int scrW = scrCols() * CHR_WIDTH, scrH = scrRows() * CHR_HEIGHT;
 }
 
+static void setColor(uint8_t idx) {
+    SDL_Color c = colors[idx];
+    SDL_SetRenderDrawColor(sdlRenderer, c.r, c.g, c.b, 255);
+}
+
 static void tickDraw() {
     RECT rect;
     GetWindowRect(workerWindow, &rect);
@@ -82,10 +84,32 @@ static void tickDraw() {
 
     drawRandom(); // TODO: customize the mode
 
-    // RedrawWindow(mainWindow, NULL, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW);
-
-    SDL_SetRenderDrawColor(sdlRenderer, 255, 0, 255, 255);
+    SDL_SetRenderDrawColor(sdlRenderer, 0, 0, 0, 255);
     SDL_RenderClear(sdlRenderer);
+
+    for (int y = 0; y < scrRows(); y++)
+        for (int x = 0; x < scrCols(); x++) {
+            const struct chr* chr = chrAt(x, y);
+
+            SDL_FRect rect;
+            rect.x = x * CHR_WIDTH;
+            rect.y = y * CHR_HEIGHT;
+            rect.w = CHR_WIDTH;
+            rect.h = CHR_HEIGHT;
+
+            SDL_FRect src;
+            src.x = (int)(chr->idx % 16) * CHR_WIDTH;
+            src.y = (int)(chr->idx / 16) * CHR_HEIGHT;
+            src.w = CHR_WIDTH;
+            src.h = CHR_HEIGHT;
+
+            setColor(chr->bg);
+            SDL_RenderFillRect(sdlRenderer, &rect);
+
+            setColor(chr->fg);
+            SDL_RenderTexture(sdlRenderer, vgaTexture, &src, &rect);
+        }
+
     SDL_RenderPresent(sdlRenderer);
 }
 
@@ -103,7 +127,7 @@ int main(int argc, char* argv[]) {
     srand(time(NULL));
     clockInit();
 
-    if (!SDL_Init(SDL_INIT_VIDEO))
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
         Fatal("SDL_Init failed!");
 
     progman = FindWindow("Progman", NULL);
@@ -131,17 +155,26 @@ int main(int argc, char* argv[]) {
     SetParent(mainWindow, workerWindow);
     ShowWindow(workerWindow, 1);
 
-    initBrushes();
+    initColors();
 
     int d1, d2, n;
-    vgaData = stbi_load("9x16.png", &d1, &d2, &n, 0);
+    uint8_t* vgaData = stbi_load("9x16.png", &d1, &d2, &n, 0);
     if (vgaData == NULL)
         Fatal("Failed to load the VGA 9x16 font PNG");
+
+    SDL_Surface* vgaSurface = SDL_CreateSurfaceFrom(144, 256, SDL_PIXELFORMAT_RGBA8888, vgaData, 144 * 4);
+    vgaTexture = SDL_CreateTextureFromSurface(sdlRenderer, vgaSurface);
 
     Info("Starting...");
 
     instant lastDraw = elapsed();
     for (;;) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_QUIT)
+                goto cleanup;
+        }
+
         tickDraw();
 
         MSG msg;
@@ -162,13 +195,15 @@ int main(int argc, char* argv[]) {
         lastDraw += delta;
     }
 
+cleanup:
     Info("Goodbye!");
+
+    SDL_DestroyTexture(vgaTexture);
+    SDL_DestroySurface(vgaSurface);
+    stbi_image_free(vgaData);
 
     SDL_DestroyWindow(sdlWindow);
     SDL_Quit();
-
-    stbi_image_free(vgaData);
-    freeBrushes();
 
     return EXIT_SUCCESS;
 }
