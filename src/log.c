@@ -4,8 +4,6 @@
 #include "log.h"
 
 int gLogLevel = LOG_INFO;
-char gLogBuf[LOG_MAX];
-FILE* gLogFile = NULL;
 
 const char* fmtLogLevel(int level) {
     switch (level) {
@@ -36,17 +34,6 @@ const char* srcBasename(const char* path) {
     return s == NULL ? path : s + 1;
 }
 
-void logInit() {
-    if (gLogFile == NULL)
-        gLogFile = fopen("micraneft.log", "w");
-}
-
-void logCleanup() {
-    if (gLogFile != NULL)
-        fclose(gLogFile);
-}
-
 void commitSeppuku() {
-    logCleanup();
     exit(EXIT_FAILURE);
 }

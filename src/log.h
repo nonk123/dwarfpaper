@@ -11,16 +11,16 @@ enum {
     LOG_FATAL,
 };
 
-#define LOG_MAX (1024)
-
 extern int gLogLevel;
-
+#define LOG_OUT (stdout)
 #define _Log(level, linum, src_file, msg, ...)                                                                         \
     do {                                                                                                               \
         if ((level) < gLogLevel)                                                                                       \
             break;                                                                                                     \
-        printf("%s: [%s:%d] -> " msg "\n", fmtLogLevel((level)), srcBasename((src_file)), (linum), ##__VA_ARGS__);     \
-        fflush(stdout);                                                                                                \
+        fprintf(                                                                                                       \
+            LOG_OUT, "%s: [%s:%d] -> " msg "\n", fmtLogLevel((level)), srcBasename((src_file)), (linum), ##__VA_ARGS__ \
+        );                                                                                                             \
+        fflush(LOG_OUT);                                                                                               \
     } while (0)
 #define Log(level, ...) _Log(level, __LINE__, __FILE__, __VA_ARGS__)
 
@@ -37,7 +37,4 @@ extern int gLogLevel;
 
 const char* fmtLogLevel(int);
 const char* srcBasename(const char*);
-
-void logInit();
-void logCleanup();
 void commitSeppuku();
