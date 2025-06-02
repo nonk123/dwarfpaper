@@ -40,7 +40,8 @@ add_library(noise ${noise_SOURCE_DIR}/open-simplex-noise.c
                   ${noise_SOURCE_DIR}/open-simplex-noise.h)
 target_include_directories(noise PUBLIC ${noise_SOURCE_DIR})
 
-add_library(stb-image ${stb_SOURCE_DIR}/stb_image.h ${SRC_DIR}/stb_image.c)
+add_library(stb-image ${stb_SOURCE_DIR}/stb_image.h
+                      ${PROJECT_SOURCE_DIR}/ext/stb_image.c)
 target_include_directories(stb-image PUBLIC ${stb_SOURCE_DIR})
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
