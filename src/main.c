@@ -8,7 +8,6 @@
 
 #include "SDL3/SDL_error.h"
 #include "SDL3/SDL_events.h"
-#include "SDL3/SDL_hints.h"
 #include "SDL3/SDL_init.h"
 #include "SDL3/SDL_pixels.h"
 #include "SDL3/SDL_properties.h"
@@ -177,6 +176,8 @@ int main(int argc, char* argv[]) {
     int targetDelta = 1000000000.0 / SDL_GetDesktopDisplayMode(sdlDisplay)->refresh_rate;
 
     for (;;) {
+        const uint64_t frameStart = SDL_GetTicksNS();
+
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT)
@@ -201,10 +202,9 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        const uint64_t frameStart = SDL_GetTicksNS();
         modeTick();
-        const uint64_t now = SDL_GetTicksNS();
 
+        const uint64_t now = SDL_GetTicksNS();
         uint64_t delta = now - frameStart;
         if (delta < targetDelta) {
             SDL_DelayNS(targetDelta - delta);

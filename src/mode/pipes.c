@@ -99,34 +99,33 @@ void tickPipes(void* _state) {
         else
             cur->idx = (12 * 16) + 13;
 
-        if (!(rand() % TURN_FREQ)) {
-            int newDir = pipe->dir + 1 - 2 * (rand() % 2);
-            while (newDir >= 3)
-                newDir -= 4;
-            while (newDir < 0)
-                newDir += 4;
-            if (pipe->dir == newDir)
-                continue;
+        if (rand() % TURN_FREQ)
+            continue;
 
-            if (pipe->dir == DIR_NORTH && newDir == DIR_WEST)
-                cur->idx = (11 * 16) + 11;
-            else if (pipe->dir == DIR_NORTH && newDir == DIR_EAST)
-                cur->idx = (12 * 16) + 9;
-            else if (pipe->dir == DIR_SOUTH && newDir == DIR_WEST)
-                cur->idx = (11 * 16) + 12;
-            else if (pipe->dir == DIR_SOUTH && newDir == DIR_EAST)
-                cur->idx = (12 * 16) + 8;
-            else if (pipe->dir == DIR_WEST && newDir == DIR_NORTH)
-                cur->idx = (12 * 16) + 8;
-            else if (pipe->dir == DIR_WEST && newDir == DIR_SOUTH)
-                cur->idx = (12 * 16) + 9;
-            else if (pipe->dir == DIR_EAST && newDir == DIR_NORTH)
-                cur->idx = (11 * 16) + 12;
-            else if (pipe->dir == DIR_EAST && newDir == DIR_SOUTH)
-                cur->idx = (11 * 16) + 11;
-            ;
+        int newDir = pipe->dir + 1 - 2 * (rand() % 2);
+        while (newDir >= 3)
+            newDir -= 4;
+        while (newDir < 0)
+            newDir += 4;
+        if (pipe->dir == newDir)
+            continue;
 
-            pipe->dir = newDir;
-        }
+        if (pipe->dir == DIR_NORTH && newDir == DIR_WEST)
+            cur->idx = (11 * 16) + 11;
+        else if (pipe->dir == DIR_NORTH && newDir == DIR_EAST)
+            cur->idx = (12 * 16) + 9;
+        else if (pipe->dir == DIR_SOUTH && newDir == DIR_WEST)
+            cur->idx = (11 * 16) + 12;
+        else if (pipe->dir == DIR_SOUTH && newDir == DIR_EAST)
+            cur->idx = (12 * 16) + 8;
+        else if (pipe->dir == DIR_WEST && newDir == DIR_NORTH)
+            cur->idx = (12 * 16) + 8;
+        else if (pipe->dir == DIR_WEST && newDir == DIR_SOUTH)
+            cur->idx = (12 * 16) + 9;
+        else if (pipe->dir == DIR_EAST && newDir == DIR_NORTH)
+            cur->idx = (11 * 16) + 12;
+        else if (pipe->dir == DIR_EAST && newDir == DIR_SOUTH)
+            cur->idx = (11 * 16) + 11;
+        pipe->dir = newDir;
     }
 }
