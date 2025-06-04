@@ -19,8 +19,8 @@ struct pipe {
     uint8_t color : 4;
 };
 
-#define MAX_PIPES (28)
-#define MIN_PIPES (8)
+#define MAX_PIPES (13)
+#define MIN_PIPES (6)
 struct state {
     instant moveTimer, resetTimer;
     uint8_t pipesCount;
@@ -56,7 +56,7 @@ void tickPipes(void* _state) {
         state->resetTimer = now;
         clear();
 
-        state->pipesCount = MIN_PIPES + (rand() % (MAX_PIPES - MIN_PIPES));
+        state->pipesCount = MIN_PIPES + (rand() % (MAX_PIPES - MIN_PIPES + 1));
         for (size_t i = 0; i < state->pipesCount; i++) {
             struct pipe* pipe = &pipes[i];
             pipe->x = rand() % scrCols();
