@@ -15,17 +15,15 @@ enum {
 
 struct pipe {
     int x, y;
-    uint8_t active : 1;
     uint8_t dir : 2;
     uint8_t color : 4;
 };
 
-#define MAX_PIPES (64)
-#define PIPE_ACTIVE_FREQ (6)
+#define MAX_PIPES (28)
+#define MIN_PIPES (8)
 struct state {
-    struct pipe pipes[MAX_PIPES];
     instant moveTimer, resetTimer;
-    uint8_t init : 1;
+    uint8_t pipesCount;
 };
 
 static void clear() {
@@ -39,45 +37,41 @@ static void clear() {
 
 void drawPipes(const void* _state) {
     const struct state* state = _state;
-    if (!state->init)
+    if (!state->pipesCount)
         clear();
 }
 
-#define MOVE_RATE (5)
+#define MOVE_RATE (60)
 #define TURN_FREQ (20)
 #define RESET_SECS (30)
 
 void tickPipes(void* _state) {
     struct state* state = _state;
+    struct pipe* pipes = (struct pipe*)(state + 1);
     const instant now = elapsed();
 
-    if (!state->init || (now - state->resetTimer >= CLOCK_RES * RESET_SECS)) {
+    if (!state->pipesCount)
+        state->moveTimer = now;
+    if (!state->pipesCount || (now - state->resetTimer >= CLOCK_RES * RESET_SECS)) {
         state->resetTimer = now;
         clear();
 
-        for (size_t i = 0; i < MAX_PIPES; i++) {
-            struct pipe* pipe = &state->pipes[i];
+        state->pipesCount = MIN_PIPES + (rand() % (MAX_PIPES - MIN_PIPES));
+        for (size_t i = 0; i < state->pipesCount; i++) {
+            struct pipe* pipe = &pipes[i];
             pipe->x = rand() % scrCols();
             pipe->y = rand() % scrRows();
-            pipe->active = !(rand() % PIPE_ACTIVE_FREQ);
             pipe->dir = rand() % 4;
             pipe->color = 9 + rand() % 7;
         }
     }
-    if (!state->init) {
-        state->moveTimer = now;
-        state->init = 1;
-    }
 
-    if ((now - state->moveTimer) >= (CLOCK_RES / MOVE_RATE)) {
+    if ((now - state->moveTimer) >= (CLOCK_RES / MOVE_RATE))
         state->moveTimer = now;
+    else
         return;
-    }
-
-    for (size_t i = 0; i < MAX_PIPES; i++) {
-        struct pipe* pipe = &state->pipes[i];
-        if (!pipe->active)
-            continue;
+    for (size_t i = 0; i < state->pipesCount; i++) {
+        struct pipe* pipe = &pipes[i];
 
         pipe->x += (pipe->dir == DIR_EAST) - (pipe->dir == DIR_WEST);
         pipe->y += (pipe->dir == DIR_SOUTH) - (pipe->dir == DIR_NORTH);
