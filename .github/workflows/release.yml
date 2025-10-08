@@ -9,9 +9,12 @@ concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  REFNAME: ${{ github.ref_name == 'master' && 'dev' || github.ref_name }}
+
 jobs:
   release:
-    name: Release ${{ github.ref_name == 'master' && 'dev' || github.ref_name }} binaries for ${{ matrix.os.name }}
+    name: Release  ${{ github.ref_name == 'master' && 'dev' || github.ref_name }} binaries for ${{ matrix.os.name }}
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -23,7 +26,6 @@ jobs:
           - name: Win64
             mingw: 64
     env:
-      REFNAME: ${{ github.ref_name == 'master' && 'dev' || github.ref_name }}
       OUTFILE: dwarfpaper-${{ matrix.os.name }}-${{ github.ref_name == 'master' && 'dev' || github.ref_name }}.exe
       MINGW_ARCH: ${{ matrix.os.mingw == 32 && 'i686' || 'x86_64' }}
       MINGW_SHIT: >-
