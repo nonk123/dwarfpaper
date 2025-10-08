@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>
+#include <SDL3/SDL_stdinc.h>
 
 #define CHR_WIDTH (9)
 #define CHR_HEIGHT (16)

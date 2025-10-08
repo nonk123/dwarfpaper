@@ -1,6 +1,7 @@
 #pragma once
 
-#include <stdio.h>
+#include <SDL3/SDL_stdinc.h>
+#include <stdio.h> // really need this...
 
 enum LogLevel {
 	LOG_TRACE,

@@ -72,17 +72,15 @@ static void render_cell(int x, int y) {
 		return;
 	*back = *front;
 
-	SDL_FRect dest;
+	SDL_FRect dest = {0};
 	dest.x = (float)(x * CHR_WIDTH);
 	dest.y = (float)(y * CHR_HEIGHT);
-	dest.w = CHR_WIDTH;
-	dest.h = CHR_HEIGHT;
+	dest.w = CHR_WIDTH, dest.h = CHR_HEIGHT;
 
-	SDL_FRect src;
+	SDL_FRect src = {0};
 	src.x = (float)((int)(front->chr % 16) * CHR_WIDTH);
 	src.y = (float)((int)(front->chr / 16) * CHR_HEIGHT);
-	src.w = CHR_WIDTH;
-	src.h = CHR_HEIGHT;
+	src.w = CHR_WIDTH, src.h = CHR_HEIGHT;
 
 	SDL_Color c = colors[front->bg];
 	SDL_SetRenderDrawColor(sdl_renderer, c.r, c.g, c.b, 255);
@@ -143,11 +141,10 @@ int main(int argc, char* argv[]) {
 	expect(SDL_CreateWindowAndRenderer("dwarfpaper", 1, 1, flags, &sdl_window, &sdl_renderer),
 		"Failed to create the SDL window/renderer!!! %s", SDL_GetError());
 
-	SDL_Rect bounds;
+	SDL_Rect bounds = {0};
 	SDL_DisplayID sdl_display = SDL_GetPrimaryDisplay();
 	expect(SDL_GetDisplayBounds(sdl_display, &bounds), "Failed to get display bounds");
-	rows = bounds.h / CHR_HEIGHT + 1;
-	cols = bounds.w / CHR_WIDTH + 1;
+	rows = bounds.h / CHR_HEIGHT + 1, cols = bounds.w / CHR_WIDTH + 1;
 
 	expect(SDL_SetWindowPosition(sdl_window, 0, 0), "Failed to set the SDL window position! %s", SDL_GetError());
 	expect(SDL_SetWindowSize(sdl_window, screen_width(), screen_height()), "Failed to set the SDL window size! %s",
@@ -189,19 +186,14 @@ int main(int argc, char* argv[]) {
 				continue;
 
 			expect(SDL_GetDisplayBounds(sdl_display, &bounds), "Failed to get display bounds");
-			rows = bounds.h / CHR_HEIGHT + 1;
-			cols = bounds.w / CHR_WIDTH + 1;
+			rows = bounds.h / CHR_HEIGHT + 1, cols = bounds.w / CHR_WIDTH + 1;
 
 			double_buf = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
 				screen_width(), screen_height());
 			expect(double_buf != NULL, "Failed to create the front-buffer texture!!! %s", SDL_GetError());
 
-			for (int i = 0; i < MAX_WIDTH * MAX_HEIGHT; i++) {
-				back_buf[i].chr = 0;
-				back_buf[i].fg = C_GRAY;
-				back_buf[i].bg = C_BLACK;
-			}
-
+			for (int i = 0; i < MAX_WIDTH * MAX_HEIGHT; i++)
+				back_buf[i].chr = 0, back_buf[i].fg = C_GRAY, back_buf[i].bg = C_BLACK;
 			mode_redraw();
 		}
 
@@ -214,13 +206,10 @@ int main(int argc, char* argv[]) {
 			delta = target_delta;
 		}
 
-		fps++;
-		second += delta;
-		if (second >= CLOCK_SECOND) {
-			// Info("FPS: %d", get_fps());
+		fps++, second += delta;
+		while (second >= CLOCK_SECOND) {
+			fps_counter = fps, fps = 0;
 			second -= CLOCK_SECOND;
-			fps_counter = fps;
-			fps = 0;
 		}
 	}
 

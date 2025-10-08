@@ -13,8 +13,7 @@ enum {
 
 typedef struct {
 	int x, y;
-	uint8_t dir : 2;
-	uint8_t color : 4;
+	uint8_t dir : 2, color : 4;
 } Pipe;
 
 #define MAX_PIPES (13)
@@ -56,11 +55,10 @@ void update_pipes(void* _this) {
 
 		this->pipe_count = MIN_PIPES + SDL_rand(MAX_PIPES - MIN_PIPES + 1);
 		for (int i = 0; i < this->pipe_count; i++) {
-			Pipe* pipe = &pipes[i];
-			pipe->x = SDL_rand(screen_cols());
-			pipe->y = SDL_rand(screen_rows());
-			pipe->dir = SDL_rand(4) % 4;
-			pipe->color = 9 + SDL_rand(7);
+			pipes[i].x = SDL_rand(screen_cols());
+			pipes[i].y = SDL_rand(screen_rows());
+			pipes[i].dir = SDL_rand(4) % 4;
+			pipes[i].color = 9 + SDL_rand(7);
 		}
 	}
 
