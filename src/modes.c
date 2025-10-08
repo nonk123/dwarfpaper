@@ -8,10 +8,10 @@
 
 extern void render();
 
-static void draw_jumbled(const void* _state) {
+static void draw_jumbled(__attribute__((unused)) const void* _state) {
 	for (int x = 0; x < screen_cols(); x++)
 		for (int y = 0; y < screen_rows(); y++) {
-			cell_at(x, y)->idx = 1 + SDL_rand(255);
+			cell_at(x, y)->chr = 1 + SDL_rand(255);
 			cell_at(x, y)->fg = 1 + SDL_rand(15);
 			cell_at(x, y)->bg = C_BLACK;
 		}
@@ -36,7 +36,7 @@ static mode_table* get_mode() {
 		if (!SDL_strncmp(mode->name, cur_mode, sizeof(cur_mode)))
 			return mode;
 	}
-	Fatal("Unknown wallpaper mode: %s", cur_mode);
+	fatal("Unknown wallpaper mode: %s", cur_mode);
 }
 
 void mode_tick() {

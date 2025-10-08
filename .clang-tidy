@@ -10,4 +10,5 @@ Checks: |
   -bugprone-suspicious-memory-comparison,
   performance-*,
   -performance-enum-size,
-  portability-*
+  portability-*,
+  misc-*

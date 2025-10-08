@@ -21,9 +21,7 @@ const char* log_level_name(enum LogLevel level) {
 		case LOG_FATAL:
 			return "FATAL";
 	}
-
 	commit_seppuku();
-	return NULL;
 }
 
 const char* file_basename(const char* path) {

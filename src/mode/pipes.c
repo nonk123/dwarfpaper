@@ -27,7 +27,7 @@ typedef struct {
 static void clear() {
 	for (int y = 0; y < screen_rows(); y++)
 		for (int x = 0; x < screen_cols(); x++) {
-			cell_at(x, y)->idx = 0;
+			cell_at(x, y)->chr = 0;
 			cell_at(x, y)->fg = C_BLACK;
 			cell_at(x, y)->bg = C_BLACK;
 		}
@@ -87,9 +87,9 @@ void update_pipes(void* _this) {
 		cur->fg = pipe->color;
 
 		if (pipe->dir == DIR_NORTH || pipe->dir == DIR_SOUTH)
-			cur->idx = (11 * 16) + 10;
+			cur->chr = (11 * 16) + 10;
 		else
-			cur->idx = (12 * 16) + 13;
+			cur->chr = (12 * 16) + 13;
 
 		if (SDL_rand(TURN_FREQ))
 			continue;
@@ -103,16 +103,16 @@ void update_pipes(void* _this) {
 			continue;
 
 		if ((pipe->dir == DIR_NORTH && newDir == DIR_WEST) || (pipe->dir == DIR_EAST && newDir == DIR_SOUTH))
-			cur->idx = (11 * 16) + 11;
+			cur->chr = (11 * 16) + 11;
 		else if ((pipe->dir == DIR_NORTH && newDir == DIR_EAST)
 			 || (pipe->dir == DIR_WEST && newDir == DIR_SOUTH))
-			cur->idx = (12 * 16) + 9;
+			cur->chr = (12 * 16) + 9;
 		else if ((pipe->dir == DIR_SOUTH && newDir == DIR_WEST)
 			 || (pipe->dir == DIR_EAST && newDir == DIR_NORTH))
-			cur->idx = (11 * 16) + 12;
+			cur->chr = (11 * 16) + 12;
 		else if ((pipe->dir == DIR_SOUTH && newDir == DIR_EAST)
 			 || (pipe->dir == DIR_WEST && newDir == DIR_NORTH))
-			cur->idx = (12 * 16) + 8;
+			cur->chr = (12 * 16) + 8;
 		pipe->dir = newDir;
 	}
 }

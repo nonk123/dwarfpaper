@@ -9,11 +9,11 @@
 #define MAX_HEIGHT (120)
 
 typedef struct {
-	uint8_t idx, fg : 4, bg : 4;
+	uint8_t chr, fg : 4, bg : 4;
 } Cell;
 
 int screen_cols(), screen_rows(), screen_width(), screen_height();
-Cell* cell_at(int, int);
+Cell *cell_at(int, int), *cell_at_ex(Cell*, int, int);
 
 // Straight outta <https://github.com/nonk123/micraneft2>:
 

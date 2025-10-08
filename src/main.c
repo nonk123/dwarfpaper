@@ -5,6 +5,7 @@
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
+#include <SDL3/SDL_main.h>
 #include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_properties.h>
 #include <SDL3/SDL_render.h>
@@ -58,28 +59,28 @@ static void colors_init() {
 #undef MID
 #undef FULL
 
-static int find_worker(HWND topHandle, LPARAM topParamHandle) {
-	HWND p = FindWindowEx(topHandle, NULL, "SHELLDLL_DefView", NULL);
+static int find_worker(HWND top_handle, __attribute__((unused)) LPARAM top_param) {
+	HWND p = FindWindowEx(top_handle, NULL, "SHELLDLL_DefView", NULL);
 	if (p != NULL)
-		worker_window = FindWindowEx(NULL, topHandle, "WorkerW", NULL);
+		worker_window = FindWindowEx(NULL, top_handle, "WorkerW", NULL);
 	return 1;
 }
 
-static Cell backBuf[MAX_WIDTH * MAX_HEIGHT];
+static Cell back_buf[MAX_WIDTH * MAX_HEIGHT];
 static SDL_Texture* double_buf = NULL;
 
 void render() {
-	Assert(double_buf != NULL, "`render` called before front-buffer texture was initialized");
+	assert(double_buf != NULL, "`render` called before front-buffer texture was initialized");
 	SDL_SetRenderTarget(sdl_renderer, double_buf);
 
 	for (int y = 0; y < screen_rows(); y++)
 		for (int x = 0; x < screen_cols(); x++) {
-			const Cell* chr = cell_at(x, y);
-			Cell* back = &backBuf[y * screen_cols() + x];
+			const Cell* front = cell_at(x, y);
+			Cell* back = cell_at_ex(back_buf, x, y);
 
-			if (chr->idx == back->idx && chr->fg == back->fg && chr->bg == back->bg)
+			if (!SDL_memcmp(front, back, sizeof(Cell)))
 				continue;
-			*back = *chr;
+			*back = *front;
 
 			SDL_FRect dest;
 			dest.x = (float)(x * CHR_WIDTH);
@@ -88,16 +89,16 @@ void render() {
 			dest.h = CHR_HEIGHT;
 
 			SDL_FRect src;
-			src.x = (float)((int)(chr->idx % 16) * CHR_WIDTH);
-			src.y = (float)((int)(chr->idx / 16) * CHR_HEIGHT);
+			src.x = (float)((int)(front->chr % 16) * CHR_WIDTH);
+			src.y = (float)((int)(front->chr / 16) * CHR_HEIGHT);
 			src.w = CHR_WIDTH;
 			src.h = CHR_HEIGHT;
 
-			SDL_Color c = colors[chr->bg];
+			SDL_Color c = colors[front->bg];
 			SDL_SetRenderDrawColor(sdl_renderer, c.r, c.g, c.b, 255);
 			SDL_RenderFillRect(sdl_renderer, &dest);
 
-			c = colors[chr->fg];
+			c = colors[front->fg];
 			SDL_SetTextureColorMod(vga_texture, c.r, c.g, c.b);
 			SDL_RenderTexture(sdl_renderer, vga_texture, &src, &dest);
 		}
@@ -119,33 +120,33 @@ int get_fps() {
 }
 
 static int rows = 0, cols = 0;
-int main(int argc, char* argv[]) {
+int main(__attribute__((unused)) int argc, __attribute__((unused)) char* argv[]) {
 	colors_init();
 	set_mode("pipes");
 
-	Assert(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS), "SDL_Init failed! %s", SDL_GetError());
+	assert(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS), "SDL_Init failed! %s", SDL_GetError());
 
 	HWND progman = FindWindow("Progman", NULL);
-	Assert(progman != NULL, "Failed to find the Progman window!");
+	assert(progman != NULL, "Failed to find the Progman window!");
 
-	SendMessage(progman, 0x052C, 0, 0);
+	SendMessage(progman, 0x052C, 0, 0); // !!! undocumented thingy powering this whole ordeal
 	EnumWindows(find_worker, 0);
-	Assert(worker_window != NULL, "Failed to find the Worker window!!!");
+	assert(worker_window != NULL, "Failed to find the Worker window!!!");
 
 	RECT rect;
 	GetWindowRect(worker_window, &rect);
 
-	Assert(SDL_CreateWindowAndRenderer("dwarfpaper", 1, 1, SDL_WINDOW_FULLSCREEN, &sdl_window, &sdl_renderer),
+	assert(SDL_CreateWindowAndRenderer("dwarfpaper", 1, 1, SDL_WINDOW_FULLSCREEN, &sdl_window, &sdl_renderer),
 		"Failed to create the SDL window/renderer!!! %s", SDL_GetError());
 
 	SDL_Rect bounds;
 	SDL_DisplayID sdl_display = SDL_GetPrimaryDisplay();
-	Assert(SDL_GetDisplayBounds(sdl_display, &bounds), "Failed to get display bounds");
+	assert(SDL_GetDisplayBounds(sdl_display, &bounds), "Failed to get display bounds");
 	rows = bounds.h / CHR_HEIGHT + 1;
 	cols = bounds.w / CHR_WIDTH + 1;
 
-	Assert(SDL_SetWindowPosition(sdl_window, 0, 0), "Failed to set the SDL window position! %s", SDL_GetError());
-	Assert(SDL_SetWindowSize(sdl_window, screen_width(), screen_height()), "Failed to set the SDL window size! %s",
+	assert(SDL_SetWindowPosition(sdl_window, 0, 0), "Failed to set the SDL window position! %s", SDL_GetError());
+	assert(SDL_SetWindowSize(sdl_window, screen_width(), screen_height()), "Failed to set the SDL window size! %s",
 		SDL_GetError());
 
 	HWND main_window
@@ -155,15 +156,15 @@ int main(int argc, char* argv[]) {
 
 	int d1, d2, n;
 	uint8_t* vga_data = stbi_load("9x16.png", &d1, &d2, &n, 4);
-	Assert(vga_data != NULL, "Failed to load the VGA 9x16 font PNG");
+	assert(vga_data != NULL, "Failed to load the VGA 9x16 font PNG");
 
 	SDL_Surface* vga_surface = SDL_CreateSurfaceFrom(144, 256, SDL_PIXELFORMAT_RGBA8888, vga_data, 144 * 4);
-	Assert(vga_surface != NULL, "Failed to create the VGA 9x16 font surface!!! %s", SDL_GetError());
+	assert(vga_surface != NULL, "Failed to create the VGA 9x16 font surface!!! %s", SDL_GetError());
 
 	vga_texture = SDL_CreateTextureFromSurface(sdl_renderer, vga_surface);
-	Assert(vga_texture != NULL, "Failed to load the VGA 9x16 font texture!!! %s", SDL_GetError());
+	assert(vga_texture != NULL, "Failed to load the VGA 9x16 font texture!!! %s", SDL_GetError());
 
-	Info("Running...");
+	info("Running...");
 
 	uint64_t second = 0, fps = 0;
 	const float refresh_rate = SDL_GetDesktopDisplayMode(sdl_display)->refresh_rate;
@@ -176,24 +177,24 @@ int main(int argc, char* argv[]) {
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT)
 				goto cleanup;
-			if (event.type == SDL_EVENT_WINDOW_RESIZED) {
-				Assert(SDL_GetDisplayBounds(sdl_display, &bounds), "Failed to get display bounds");
-				rows = bounds.h / CHR_HEIGHT + 1;
-				cols = bounds.w / CHR_WIDTH + 1;
+			if (event.type != SDL_EVENT_WINDOW_RESIZED)
+				continue;
 
-				double_buf = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_RGBA8888,
-					SDL_TEXTUREACCESS_TARGET, screen_width(), screen_height());
-				Assert(double_buf != NULL, "Failed to create the front-buffer texture!!! %s",
-					SDL_GetError());
+			assert(SDL_GetDisplayBounds(sdl_display, &bounds), "Failed to get display bounds");
+			rows = bounds.h / CHR_HEIGHT + 1;
+			cols = bounds.w / CHR_WIDTH + 1;
 
-				for (int i = 0; i < MAX_WIDTH * MAX_HEIGHT; i++) {
-					backBuf[i].idx = 0;
-					backBuf[i].fg = C_GRAY;
-					backBuf[i].bg = C_BLACK;
-				}
+			double_buf = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
+				screen_width(), screen_height());
+			assert(double_buf != NULL, "Failed to create the front-buffer texture!!! %s", SDL_GetError());
 
-				mode_redraw();
+			for (int i = 0; i < MAX_WIDTH * MAX_HEIGHT; i++) {
+				back_buf[i].chr = 0;
+				back_buf[i].fg = C_GRAY;
+				back_buf[i].bg = C_BLACK;
 			}
+
+			mode_redraw();
 		}
 
 		mode_tick();
@@ -216,7 +217,7 @@ int main(int argc, char* argv[]) {
 	}
 
 cleanup:
-	Info("Goodbye!");
+	info("Goodbye!");
 
 	SDL_DestroyTexture(double_buf);
 	SDL_DestroyTexture(vga_texture);
