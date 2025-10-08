@@ -8,7 +8,7 @@ A Live wallpaper app that renders classic Dwarf Fortress styled ASCII vomit all 
 
 ## Usage
 
-Download [a prebuild binary](https://github.com/nonk123/dwarfpaper/releases#latest) and run it, making sure it can read [`assets/9x16.png`](assets/9x16.png) from the working directory. Use the following command-line options to customize the program's behavior:
+Download [a prebuild binary](https://github.com/nonk123/dwarfpaper/releases#latest) and run it. Use the following command-line options to customize the program's behavior:
 
 - `-m`/`--mode`: Select one of the supported modes by name. Only `pipes` is available as of now.
 - `-D`/`--debug`: Run the simulation in a separate window rather than as your actual wallpaper. Perfect for one-off tests.
