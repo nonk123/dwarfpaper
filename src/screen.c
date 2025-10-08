@@ -1,18 +1,18 @@
 #include "screen.h"
 
-static struct chr buf[MAX_WIDTH * MAX_HEIGHT];
+static Cell buf[MAX_WIDTH * MAX_HEIGHT];
 
-struct chr* chrAt(int x, int y) {
-    static struct chr deflt = {0, C_GRAY, C_BLACK};
-    if (x < 0 || y < 0 || x > scrCols() || y > scrRows())
-        return &deflt;
-    return &buf[y * scrCols() + x];
+Cell* cell_at(int x, int y) {
+	static Cell deflt = {0, C_GRAY, C_BLACK};
+	if (x < 0 || y < 0 || x > screen_cols() || y > screen_rows())
+		return &deflt;
+	return &buf[y * screen_cols() + x];
 }
 
-int scrWidth() {
-    return scrCols() * CHR_WIDTH;
+int screen_width() {
+	return screen_cols() * CHR_WIDTH;
 }
 
-int scrHeight() {
-    return scrRows() * CHR_HEIGHT;
+int screen_height() {
+	return screen_rows() * CHR_HEIGHT;
 }

@@ -1,4 +1,4 @@
 #pragma once
 
-void drawPipes(const void*);
-void tickPipes(void*);
+void draw_pipes(const void*);
+void update_pipes(void*);

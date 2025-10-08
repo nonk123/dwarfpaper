@@ -3,17 +3,11 @@
 typedef void (*drawFn)(const void*), (*tickFn)(void*);
 #define MODE_STATE_SIZE (4096)
 
-struct modeAlist {
-    const char* name;
-    drawFn draw;
-    tickFn tick;
-};
+typedef struct {
+	const char* name;
+	drawFn draw;
+	tickFn update;
+} mode_table;
 
-enum {
-    MODE_JUMBLED,
-    MODE_PIPES,
-    MODE_MAX,
-};
-
-void setMode(const char*);
-void modeTick(), modeForceRedraw();
+void set_mode(const char*);
+void mode_tick(), mode_redraw();

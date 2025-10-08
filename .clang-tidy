@@ -1,0 +1,13 @@
+Checks: |
+  clang-diagnostic-*,
+  clang-analyzer-*,
+  bugprone-*,
+  -bugprone-assignment-in-if-condition,
+  -bugprone-suspicious-string-compare,
+  -bugprone-reserved-identifier,
+  -bugprone-not-null-terminated-result,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-suspicious-memory-comparison,
+  performance-*,
+  -performance-enum-size,
+  portability-*

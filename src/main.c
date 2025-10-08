@@ -1,20 +1,18 @@
-#include <time.h>
-
 #include <windows.h>
 #include <wingdi.h>
 #include <winuser.h>
 
-#include "stb_image.h"
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_pixels.h>
+#include <SDL3/SDL_properties.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_surface.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_video.h>
 
-#include "SDL3/SDL_error.h"
-#include "SDL3/SDL_events.h"
-#include "SDL3/SDL_init.h"
-#include "SDL3/SDL_pixels.h"
-#include "SDL3/SDL_properties.h"
-#include "SDL3/SDL_render.h"
-#include "SDL3/SDL_surface.h"
-#include "SDL3/SDL_timer.h"
-#include "SDL3/SDL_video.h"
+#include <stb_image.h>
 
 #include "clock.h"
 #include "fps.h"
@@ -22,223 +20,219 @@
 #include "modes.h"
 #include "screen.h"
 
-static HWND workerWindow = NULL;
-static SDL_Window* sdlWindow = NULL;
-static SDL_Renderer* sdlRenderer = NULL;
-static SDL_Texture* vgaTexture = NULL;
+static HWND worker_window = NULL;
+static SDL_Window* sdl_window = NULL;
+static SDL_Renderer* sdl_renderer = NULL;
+static SDL_Texture* vga_texture = NULL;
 
 static SDL_Color colors[16] = {0};
 
-static void initColors() {
 #define FULL (255)
 #define MID (170)
 #define LOW (85)
-    colors[C_BLACK] = (SDL_Color){0, 0, 0, 255};
-    colors[C_GRAY] = (SDL_Color){LOW, LOW, LOW, 255};
-    colors[C_WHITE] = (SDL_Color){MID, MID, MID, 255};
-    colors[C_BRIGHT_WHITE] = (SDL_Color){FULL, FULL, FULL, 255};
+static void colors_init() {
+	colors[C_BLACK] = (SDL_Color){0, 0, 0, 255};
+	colors[C_GRAY] = (SDL_Color){LOW, LOW, LOW, 255};
+	colors[C_WHITE] = (SDL_Color){MID, MID, MID, 255};
+	colors[C_BRIGHT_WHITE] = (SDL_Color){FULL, FULL, FULL, 255};
 
-    colors[C_RED] = (SDL_Color){MID, 0, 0, 255};
-    colors[C_BRIGHT_RED] = (SDL_Color){FULL, LOW, LOW, 255};
+	colors[C_RED] = (SDL_Color){MID, 0, 0, 255};
+	colors[C_BRIGHT_RED] = (SDL_Color){FULL, LOW, LOW, 255};
 
-    colors[C_GREEN] = (SDL_Color){0, MID, 0, 255};
-    colors[C_BRIGHT_GREEN] = (SDL_Color){LOW, FULL, LOW, 255};
+	colors[C_GREEN] = (SDL_Color){0, MID, 0, 255};
+	colors[C_BRIGHT_GREEN] = (SDL_Color){LOW, FULL, LOW, 255};
 
-    colors[C_YELLOW] = (SDL_Color){FULL, MID, 0, 255};
-    colors[C_BRIGHT_YELLOW] = (SDL_Color){FULL, FULL, LOW, 255};
+	colors[C_YELLOW] = (SDL_Color){FULL, MID, 0, 255};
+	colors[C_BRIGHT_YELLOW] = (SDL_Color){FULL, FULL, LOW, 255};
 
-    colors[C_BLUE] = (SDL_Color){0, 0, MID, 255};
-    colors[C_BRIGHT_BLUE] = (SDL_Color){LOW, LOW, FULL, 255};
+	colors[C_BLUE] = (SDL_Color){0, 0, MID, 255};
+	colors[C_BRIGHT_BLUE] = (SDL_Color){LOW, LOW, FULL, 255};
 
-    colors[C_PURPLE] = (SDL_Color){MID, 0, MID, 255};
-    colors[C_BRIGHT_PURPLE] = (SDL_Color){FULL, LOW, FULL, 255};
+	colors[C_PURPLE] = (SDL_Color){MID, 0, MID, 255};
+	colors[C_BRIGHT_PURPLE] = (SDL_Color){FULL, LOW, FULL, 255};
 
-    colors[C_AQUA] = (SDL_Color){0, MID, MID, 255};
-    colors[C_BRIGHT_AQUA] = (SDL_Color){LOW, FULL, FULL, 255};
+	colors[C_AQUA] = (SDL_Color){0, MID, MID, 255};
+	colors[C_BRIGHT_AQUA] = (SDL_Color){LOW, FULL, FULL, 255};
+}
 #undef LOW
 #undef MID
 #undef FULL
+
+static int find_worker(HWND topHandle, LPARAM topParamHandle) {
+	HWND p = FindWindowEx(topHandle, NULL, "SHELLDLL_DefView", NULL);
+	if (p != NULL)
+		worker_window = FindWindowEx(NULL, topHandle, "WorkerW", NULL);
+	return 1;
 }
 
-static int findWorker(HWND topHandle, LPARAM topParamHandle) {
-    HWND p = FindWindowEx(topHandle, NULL, "SHELLDLL_DefView", NULL);
-    if (p != NULL)
-        workerWindow = FindWindowEx(NULL, topHandle, "WorkerW", NULL);
-    return 1;
+static Cell backBuf[MAX_WIDTH * MAX_HEIGHT];
+static SDL_Texture* double_buf = NULL;
+
+void render() {
+	Assert(double_buf != NULL, "`render` called before front-buffer texture was initialized");
+	SDL_SetRenderTarget(sdl_renderer, double_buf);
+
+	for (int y = 0; y < screen_rows(); y++)
+		for (int x = 0; x < screen_cols(); x++) {
+			const Cell* chr = cell_at(x, y);
+			Cell* back = &backBuf[y * screen_cols() + x];
+
+			if (chr->idx == back->idx && chr->fg == back->fg && chr->bg == back->bg)
+				continue;
+			*back = *chr;
+
+			SDL_FRect dest;
+			dest.x = (float)(x * CHR_WIDTH);
+			dest.y = (float)(y * CHR_HEIGHT);
+			dest.w = CHR_WIDTH;
+			dest.h = CHR_HEIGHT;
+
+			SDL_FRect src;
+			src.x = (float)((int)(chr->idx % 16) * CHR_WIDTH);
+			src.y = (float)((int)(chr->idx / 16) * CHR_HEIGHT);
+			src.w = CHR_WIDTH;
+			src.h = CHR_HEIGHT;
+
+			SDL_Color c = colors[chr->bg];
+			SDL_SetRenderDrawColor(sdl_renderer, c.r, c.g, c.b, 255);
+			SDL_RenderFillRect(sdl_renderer, &dest);
+
+			c = colors[chr->fg];
+			SDL_SetTextureColorMod(vga_texture, c.r, c.g, c.b);
+			SDL_RenderTexture(sdl_renderer, vga_texture, &src, &dest);
+		}
+
+	SDL_SetRenderTarget(sdl_renderer, NULL);
+
+	SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 255);
+	SDL_RenderClear(sdl_renderer);
+
+	SDL_FRect rect = {0.f, 0.f, (float)screen_width(), (float)screen_height()};
+	SDL_RenderTexture(sdl_renderer, double_buf, &rect, &rect);
+
+	SDL_RenderPresent(sdl_renderer);
 }
 
-static struct chr backBuf[MAX_WIDTH * MAX_HEIGHT];
-static SDL_Texture* doubleBuf = NULL;
-
-void paintSDL() {
-    Assert(doubleBuf != NULL, "`paintSDL` called before front-buffer texture was initialized");
-    SDL_SetRenderTarget(sdlRenderer, doubleBuf);
-
-    for (int y = 0; y < scrRows(); y++)
-        for (int x = 0; x < scrCols(); x++) {
-            const struct chr* chr = chrAt(x, y);
-            struct chr* back = &backBuf[y * scrCols() + x];
-
-            if (chr->idx == back->idx && chr->fg == back->fg && chr->bg == back->bg)
-                continue;
-            *back = *chr;
-
-            SDL_FRect dest;
-            dest.x = x * CHR_WIDTH;
-            dest.y = y * CHR_HEIGHT;
-            dest.w = CHR_WIDTH;
-            dest.h = CHR_HEIGHT;
-
-            SDL_FRect src;
-            src.x = (int)(chr->idx % 16) * CHR_WIDTH;
-            src.y = (int)(chr->idx / 16) * CHR_HEIGHT;
-            src.w = CHR_WIDTH;
-            src.h = CHR_HEIGHT;
-
-            SDL_Color c = colors[chr->bg];
-            SDL_SetRenderDrawColor(sdlRenderer, c.r, c.g, c.b, 255);
-            SDL_RenderFillRect(sdlRenderer, &dest);
-
-            c = colors[chr->fg];
-            SDL_SetTextureColorMod(vgaTexture, c.r, c.g, c.b);
-            SDL_RenderTexture(sdlRenderer, vgaTexture, &src, &dest);
-        }
-
-    SDL_SetRenderTarget(sdlRenderer, NULL);
-
-    SDL_SetRenderDrawColor(sdlRenderer, 0, 0, 0, 255);
-    SDL_RenderClear(sdlRenderer);
-
-    SDL_FRect rect = {0, 0, scrWidth(), scrHeight()};
-    SDL_RenderTexture(sdlRenderer, doubleBuf, &rect, &rect);
-
-    SDL_RenderPresent(sdlRenderer);
-}
-
-static int fpsCounter = 60;
-int curFPS() {
-    return fpsCounter;
+static uint64_t fps_counter = 60;
+int get_fps() {
+	return (int)fps_counter;
 }
 
 static int rows = 0, cols = 0;
 int main(int argc, char* argv[]) {
-    initClock();
-    initColors();
-    srand(time(NULL));
-    setMode("pipes");
+	colors_init();
+	set_mode("pipes");
 
-    Assert(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS), "SDL_Init failed! %s", SDL_GetError());
+	Assert(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS), "SDL_Init failed! %s", SDL_GetError());
 
-    HWND progman = FindWindow("Progman", NULL);
-    Assert(progman != NULL, "Failed to find the Progman window!");
+	HWND progman = FindWindow("Progman", NULL);
+	Assert(progman != NULL, "Failed to find the Progman window!");
 
-    SendMessage(progman, 0x052C, 0, 0);
-    EnumWindows(findWorker, 0);
-    Assert(workerWindow != NULL, "Failed to find the Worker window!!!");
+	SendMessage(progman, 0x052C, 0, 0);
+	EnumWindows(find_worker, 0);
+	Assert(worker_window != NULL, "Failed to find the Worker window!!!");
 
-    RECT rect;
-    GetWindowRect(workerWindow, &rect);
+	RECT rect;
+	GetWindowRect(worker_window, &rect);
 
-    Assert(
-        SDL_CreateWindowAndRenderer("dwarfpaper", 1, 1, SDL_WINDOW_FULLSCREEN, &sdlWindow, &sdlRenderer),
-        "Failed to create the SDL window/renderer!!! %s", SDL_GetError()
-    );
+	Assert(SDL_CreateWindowAndRenderer("dwarfpaper", 1, 1, SDL_WINDOW_FULLSCREEN, &sdl_window, &sdl_renderer),
+		"Failed to create the SDL window/renderer!!! %s", SDL_GetError());
 
-    SDL_Rect bounds;
-    SDL_DisplayID sdlDisplay = SDL_GetPrimaryDisplay();
-    Assert(SDL_GetDisplayBounds(sdlDisplay, &bounds), "Failed to get display bounds");
-    rows = bounds.h / CHR_HEIGHT + 1;
-    cols = bounds.w / CHR_WIDTH + 1;
+	SDL_Rect bounds;
+	SDL_DisplayID sdl_display = SDL_GetPrimaryDisplay();
+	Assert(SDL_GetDisplayBounds(sdl_display, &bounds), "Failed to get display bounds");
+	rows = bounds.h / CHR_HEIGHT + 1;
+	cols = bounds.w / CHR_WIDTH + 1;
 
-    Assert(SDL_SetWindowPosition(sdlWindow, 0, 0), "Failed to set the SDL window position! %s", SDL_GetError());
-    Assert(
-        SDL_SetWindowSize(sdlWindow, scrWidth(), scrHeight()), "Failed to set the SDL window size! %s", SDL_GetError()
-    );
+	Assert(SDL_SetWindowPosition(sdl_window, 0, 0), "Failed to set the SDL window position! %s", SDL_GetError());
+	Assert(SDL_SetWindowSize(sdl_window, screen_width(), screen_height()), "Failed to set the SDL window size! %s",
+		SDL_GetError());
 
-    HWND mainWindow =
-        SDL_GetPointerProperty(SDL_GetWindowProperties(sdlWindow), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
-    SetParent(mainWindow, workerWindow);
-    ShowWindow(workerWindow, 1); // !!! won't do jackshit without this
+	HWND main_window
+		= SDL_GetPointerProperty(SDL_GetWindowProperties(sdl_window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+	SetParent(main_window, worker_window);
+	ShowWindow(worker_window, 1); // !!! won't do jackshit without this
 
-    int d1, d2, n;
-    uint8_t* vgaData = stbi_load("9x16.png", &d1, &d2, &n, 4);
-    Assert(vgaData != NULL, "Failed to load the VGA 9x16 font PNG");
+	int d1, d2, n;
+	uint8_t* vga_data = stbi_load("9x16.png", &d1, &d2, &n, 4);
+	Assert(vga_data != NULL, "Failed to load the VGA 9x16 font PNG");
 
-    SDL_Surface* vgaSurface = SDL_CreateSurfaceFrom(144, 256, SDL_PIXELFORMAT_RGBA8888, vgaData, 144 * 4);
-    Assert(vgaSurface != NULL, "Failed to create the VGA 9x16 font surface!!! %s", SDL_GetError());
+	SDL_Surface* vga_surface = SDL_CreateSurfaceFrom(144, 256, SDL_PIXELFORMAT_RGBA8888, vga_data, 144 * 4);
+	Assert(vga_surface != NULL, "Failed to create the VGA 9x16 font surface!!! %s", SDL_GetError());
 
-    vgaTexture = SDL_CreateTextureFromSurface(sdlRenderer, vgaSurface);
-    Assert(vgaTexture != NULL, "Failed to load the VGA 9x16 font texture!!! %s", SDL_GetError());
+	vga_texture = SDL_CreateTextureFromSurface(sdl_renderer, vga_surface);
+	Assert(vga_texture != NULL, "Failed to load the VGA 9x16 font texture!!! %s", SDL_GetError());
 
-    Info("Running...");
+	Info("Running...");
 
-    uint64_t second = 0, fps = 0;
-    int targetDelta = 1000000000.0 / SDL_GetDesktopDisplayMode(sdlDisplay)->refresh_rate;
+	uint64_t second = 0, fps = 0;
+	const float refresh_rate = SDL_GetDesktopDisplayMode(sdl_display)->refresh_rate;
+	const uint64_t target_delta = (uint64_t)(((double)CLOCK_SECOND) / ((double)refresh_rate));
 
-    for (;;) {
-        const uint64_t frameStart = SDL_GetTicksNS();
+	for (;;) {
+		const uint64_t frame_start = SDL_GetTicksNS();
 
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_QUIT)
-                goto cleanup;
-            if (event.type == SDL_EVENT_WINDOW_RESIZED) {
-                Assert(SDL_GetDisplayBounds(sdlDisplay, &bounds), "Failed to get display bounds");
-                rows = bounds.h / CHR_HEIGHT + 1;
-                cols = bounds.w / CHR_WIDTH + 1;
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
+			if (event.type == SDL_EVENT_QUIT)
+				goto cleanup;
+			if (event.type == SDL_EVENT_WINDOW_RESIZED) {
+				Assert(SDL_GetDisplayBounds(sdl_display, &bounds), "Failed to get display bounds");
+				rows = bounds.h / CHR_HEIGHT + 1;
+				cols = bounds.w / CHR_WIDTH + 1;
 
-                doubleBuf = SDL_CreateTexture(
-                    sdlRenderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, scrWidth(), scrHeight()
-                );
-                Assert(doubleBuf != NULL, "Failed to create the front-buffer texture!!! %s", SDL_GetError());
+				double_buf = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_RGBA8888,
+					SDL_TEXTUREACCESS_TARGET, screen_width(), screen_height());
+				Assert(double_buf != NULL, "Failed to create the front-buffer texture!!! %s",
+					SDL_GetError());
 
-                for (size_t i = 0; i < MAX_WIDTH * MAX_HEIGHT; i++) {
-                    backBuf[i].idx = 0;
-                    backBuf[i].fg = C_GRAY;
-                    backBuf[i].bg = C_BLACK;
-                }
+				for (int i = 0; i < MAX_WIDTH * MAX_HEIGHT; i++) {
+					backBuf[i].idx = 0;
+					backBuf[i].fg = C_GRAY;
+					backBuf[i].bg = C_BLACK;
+				}
 
-                modeForceRedraw();
-            }
-        }
+				mode_redraw();
+			}
+		}
 
-        modeTick();
+		mode_tick();
 
-        const uint64_t now = SDL_GetTicksNS();
-        uint64_t delta = now - frameStart;
-        if (delta < targetDelta) {
-            SDL_DelayNS(targetDelta - delta);
-            delta = targetDelta;
-        }
+		const uint64_t now = SDL_GetTicksNS();
+		uint64_t delta = now - frame_start;
+		if (delta < target_delta) {
+			SDL_DelayNS(target_delta - delta);
+			delta = target_delta;
+		}
 
-        fps++;
-        second += delta;
-        if (second >= 1000000000) {
-            // Info("FPS: %d", curFPS());
-            second -= 1000000000;
-            fpsCounter = fps;
-            fps = 0;
-        }
-    }
+		fps++;
+		second += delta;
+		if (second >= CLOCK_SECOND) {
+			// Info("FPS: %d", get_fps());
+			second -= CLOCK_SECOND;
+			fps_counter = fps;
+			fps = 0;
+		}
+	}
 
 cleanup:
-    Info("Goodbye!");
+	Info("Goodbye!");
 
-    SDL_DestroyTexture(doubleBuf);
-    SDL_DestroyTexture(vgaTexture);
-    SDL_DestroySurface(vgaSurface);
-    stbi_image_free(vgaData);
+	SDL_DestroyTexture(double_buf);
+	SDL_DestroyTexture(vga_texture);
+	SDL_DestroySurface(vga_surface);
+	stbi_image_free(vga_data);
 
-    SDL_DestroyWindow(sdlWindow);
-    SDL_Quit();
+	SDL_DestroyWindow(sdl_window);
+	SDL_Quit();
 
-    return EXIT_SUCCESS;
+	return EXIT_SUCCESS;
 }
 
-int scrCols() {
-    return cols;
+int screen_cols() {
+	return cols;
 }
 
-int scrRows() {
-    return rows;
+int screen_rows() {
+	return rows;
 }

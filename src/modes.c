@@ -1,6 +1,4 @@
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include <SDL3/SDL_stdinc.h>
 
 #include "log.h"
 #include "modes.h"
@@ -8,47 +6,47 @@
 
 #include "mode/pipes.h"
 
-extern void paintSDL();
+extern void render();
 
-static void drawJumbled(const void* _state) {
-    for (int x = 0; x < scrCols(); x++)
-        for (int y = 0; y < scrRows(); y++) {
-            chrAt(x, y)->idx = 1 + rand() % 255;
-            chrAt(x, y)->fg = 1 + rand() % 15;
-            chrAt(x, y)->bg = C_BLACK;
-        }
+static void draw_jumbled(const void* _state) {
+	for (int x = 0; x < screen_cols(); x++)
+		for (int y = 0; y < screen_rows(); y++) {
+			cell_at(x, y)->idx = 1 + SDL_rand(255);
+			cell_at(x, y)->fg = 1 + SDL_rand(15);
+			cell_at(x, y)->bg = C_BLACK;
+		}
 }
 
-static struct modeAlist modeAlist[] = {
-    [MODE_JUMBLED] = {"jumbled", drawJumbled, NULL},
-    [MODE_PIPES] = {"pipes", drawPipes, tickPipes},
+static mode_table modes[] = {
+	{"jumbled", draw_jumbled, NULL        },
+	{"pipes",   draw_pipes,   update_pipes},
 };
 
-#define CUR_MODE_MAX (256)
-static char curMode[CUR_MODE_MAX] = {0};
-static uint8_t modeState[MODE_STATE_SIZE] = {0};
+static char cur_mode[256] = {0};
+static uint8_t mode_state[MODE_STATE_SIZE] = {0};
 
-void setMode(const char* name) {
-    strncpy(curMode, name, CUR_MODE_MAX);
-    memset(modeState, 0, MODE_STATE_SIZE);
+void set_mode(const char* name) {
+	SDL_strlcpy(cur_mode, name, sizeof(cur_mode));
+	SDL_memset(mode_state, 0, sizeof(mode_state));
 }
 
-static struct modeAlist* getMode() {
-    struct modeAlist *mode = modeAlist, *const end = modeAlist + MODE_MAX;
-    while (mode != end && strncmp(mode->name, curMode, CUR_MODE_MAX))
-        mode++;
-    Assert(mode != end, "Unknown wallpaper mode: %s", curMode);
-    return mode;
+static mode_table* get_mode() {
+	for (int i = 0; i < sizeof(modes) / sizeof(*modes); i++) {
+		mode_table* mode = &modes[i];
+		if (!SDL_strncmp(mode->name, cur_mode, sizeof(cur_mode)))
+			return mode;
+	}
+	Fatal("Unknown wallpaper mode: %s", cur_mode);
 }
 
-void modeTick() {
-    const struct modeAlist* mode = getMode();
-    mode->draw(&modeState);
-    if (mode->tick != NULL)
-        mode->tick(&modeState);
-    paintSDL();
+void mode_tick() {
+	const mode_table* mode = get_mode();
+	mode->draw(&mode_state);
+	if (mode->update != NULL)
+		mode->update(&mode_state);
+	render();
 }
 
-void modeForceRedraw() {
-    getMode()->draw(&modeState);
+void mode_redraw() {
+	get_mode()->draw(&mode_state);
 }

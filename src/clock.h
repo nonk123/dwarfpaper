@@ -1,10 +1,7 @@
 #pragma once
 
-#include "stdint.h"
+#include <SDL3/SDL_stdinc.h>
 
-#define CLOCK_RES (100000)
-typedef int64_t instant;
-
-void initClock();
-instant elapsed();
-void msSleep(int);
+#define CLOCK_SECOND ((uint64_t)(1000000000))
+typedef uint64_t Instant;
+Instant elapsed();
