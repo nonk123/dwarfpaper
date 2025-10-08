@@ -1,7 +1,8 @@
 #include <SDL3/SDL_stdinc.h>
 
 #include "clock.h"
-#include "mode/pipes.h"
+#include "colors.h"
+#include "modes/pipes.h"
 #include "screen.h"
 
 enum {

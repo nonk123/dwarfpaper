@@ -13,8 +13,6 @@ Download [a prebuild binary](https://github.com/nonk123/dwarfpaper/releases#late
 - `-m`/`--mode`: Select one of the supported modes by name. Only `pipes` is available as of now.
 - `-D`/`--debug`: Run the simulation in a separate window rather than as your actual wallpaper. Perfect for one-off tests.
 
-TODO: add multi-monitor support.
-
 ## Building
 
 I'll assume you're using [Visual Studio Code](https://code.visualstudio.com) as it's the go-to text editor for anything code-related nowadays.

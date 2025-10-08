@@ -15,7 +15,7 @@ enum LogLevel {
 extern enum LogLevel global_log_level;
 
 #define LOG_OUT (stdout)
-#define _log(level, linum, src_file, msg, ...)                                                                         \
+#define __log(level, linum, src_file, msg, ...)                                                                        \
 	do {                                                                                                           \
 		if ((level) < global_log_level)                                                                        \
 			break;                                                                                         \
@@ -23,16 +23,16 @@ extern enum LogLevel global_log_level;
 			(linum), ##__VA_ARGS__);                                                                       \
 		fflush(LOG_OUT);                                                                                       \
 	} while (0)
-#define log(level, ...) _log(level, __LINE__, __FILE__, __VA_ARGS__)
+#define _log(level, ...) __log(level, __LINE__, __FILE__, __VA_ARGS__)
 
-#define trace(...) log(LOG_TRACE, __VA_ARGS__)
-#define debug(...) log(LOG_DEBUG, __VA_ARGS__)
-#define info(...) log(LOG_INFO, __VA_ARGS__)
-#define warn(...) log(LOG_WARN, __VA_ARGS__)
-#define error(...) log(LOG_ERROR, __VA_ARGS__)
+#define trace(...) _log(LOG_TRACE, __VA_ARGS__)
+#define debug(...) _log(LOG_DEBUG, __VA_ARGS__)
+#define info(...) _log(LOG_INFO, __VA_ARGS__)
+#define warn(...) _log(LOG_WARN, __VA_ARGS__)
+#define error(...) _log(LOG_ERROR, __VA_ARGS__)
 #define fatal(...)                                                                                                     \
 	do {                                                                                                           \
-		log(LOG_FATAL, __VA_ARGS__);                                                                           \
+		_log(LOG_FATAL, __VA_ARGS__);                                                                          \
 		commit_seppuku();                                                                                      \
 	} while (0)
 #define expect(expr, ...)                                                                                              \

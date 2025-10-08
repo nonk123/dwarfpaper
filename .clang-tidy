@@ -11,4 +11,5 @@ Checks: |
   performance-*,
   -performance-enum-size,
   portability-*,
-  misc-*
+  misc-*,
+  -misc-no-recursion
