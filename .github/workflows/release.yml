@@ -27,7 +27,6 @@ jobs:
       MINGW_ARCH: ${{ matrix.os.mingw == 32 && 'i686' || 'x86_64' }}
       MINGW_SHIT: >-
         -D CMAKE_C_COMPILER=${MINGW_ARCH}-w64-mingw32-gcc
-        -D CMAKE_CXX_COMPILER=${MINGW_ARCH}-w64-mingw32-g++
         -D CMAKE_RC_COMPILER=${MINGW_ARCH}-w64-mingw32-windres
         -D CMAKE_SYSTEM_NAME=Windows
         -D CMAKE_FIND_ROOT_PATH=/usr/${MINGW_ARCH}-w64-mingw32
