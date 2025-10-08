@@ -55,7 +55,7 @@ static const SDL_Color colors[C_MAX] = {
 #undef MID
 #undef FULL
 
-static int find_worker(HWND top_handle, __attribute__((unused)) LPARAM top_param) {
+__attribute__((stdcall)) static int find_worker(HWND top_handle, __attribute__((unused)) LPARAM top_param) {
 	HWND p = FindWindowEx(top_handle, NULL, "SHELLDLL_DefView", NULL);
 	if (p != NULL)
 		worker_window = FindWindowEx(NULL, top_handle, "WorkerW", NULL);
