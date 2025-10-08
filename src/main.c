@@ -127,19 +127,19 @@ static uint64_t vga9x16_size = 0;
 static uint8_t vga9x16[8 * 1024] = {0};
 
 static void load_9x16_png() {
-	HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(VGA9X16), RT_RCDATA);
-	expect(hRes != NULL, "Failed to find the embedded 9x16.png");
+	HRSRC resource = FindResource(NULL, MAKEINTRESOURCE(VGA9X16), RT_RCDATA);
+	expect(resource != NULL, "Failed to find the embedded 9x16.png");
 
-	vga9x16_size = SizeofResource(NULL, hRes);
+	vga9x16_size = SizeofResource(NULL, resource);
 	expect(vga9x16_size, "Failed to identify the size of the embedded 9x16.png");
 
-	HGLOBAL hData = LoadResource(NULL, hRes);
-	expect(hData != NULL, "Failed to load the embedded 9x16.png");
+	HGLOBAL data = LoadResource(NULL, resource);
+	expect(data != NULL, "Failed to load the embedded 9x16.png");
 
-	const uint8_t* pData = (uint8_t*)(LockResource(hData));
-	expect(pData != NULL, "Failed to lock the embedded 9x16.png data");
+	const uint8_t* real_data = (uint8_t*)(LockResource(data));
+	expect(real_data != NULL, "Failed to lock the embedded 9x16.png data");
 
-	SDL_memcpy(vga9x16, pData, vga9x16_size);
+	SDL_memcpy(vga9x16, real_data, vga9x16_size);
 }
 
 static int handle_events(SDL_DisplayID sdl_display) {
