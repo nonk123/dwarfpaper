@@ -34,7 +34,7 @@ extern enum LogLevel global_log_level;
 		log(LOG_FATAL, __VA_ARGS__);                                                                           \
 		commit_seppuku();                                                                                      \
 	} while (0)
-#define assert(expr, ...)                                                                                              \
+#define expect(expr, ...)                                                                                              \
 	do {                                                                                                           \
 		if (!(expr))                                                                                           \
 			fatal(__VA_ARGS__);                                                                            \

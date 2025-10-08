@@ -16,6 +16,7 @@
 #include <stb_image.h>
 
 #include "clock.h"
+#include "cmdline.h"
 #include "fps.h"
 #include "log.h"
 #include "modes.h"
@@ -93,7 +94,7 @@ static void render_cell(int x, int y) {
 }
 
 void render() {
-	assert(double_buf != NULL, "`render` called before front-buffer texture was initialized");
+	expect(double_buf != NULL, "`render` called before front-buffer texture was initialized");
 	SDL_SetRenderTarget(sdl_renderer, double_buf);
 
 	for (int y = 0; y < screen_rows(); y++)
@@ -123,48 +124,51 @@ int screen_cols() {
 	return cols;
 }
 
-int main(__attribute__((unused)) int argc, __attribute__((unused)) char* argv[]) {
-	set_mode("pipes");
+int main(int argc, char* argv[]) {
+	parse_cmdline(argc, argv);
+	set_mode(args.mode);
 
-	assert(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS), "SDL_Init failed! %s", SDL_GetError());
+	expect(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS), "SDL_Init failed! %s", SDL_GetError());
 
-	HWND progman = FindWindow("Progman", NULL);
-	assert(progman != NULL, "Failed to find the Progman window!");
+	if (!args.debug) {
+		HWND progman = FindWindow("Progman", NULL);
+		expect(progman != NULL, "Failed to find the Progman window!");
 
-	SendMessage(progman, 0x052C, 0, 0); // !!! undocumented thingy powering this whole ordeal
-	EnumWindows(find_worker, 0);
-	assert(worker_window != NULL, "Failed to find the Worker window!!!");
+		SendMessage(progman, 0x052C, 0, 0); // !!! undocumented thingy powering this whole ordeal
+		EnumWindows(find_worker, 0);
+		expect(worker_window != NULL, "Failed to find the Worker window!!!");
+	}
 
-	RECT rect = {0};
-	GetWindowRect(worker_window, &rect);
-
-	assert(SDL_CreateWindowAndRenderer("dwarfpaper", 1, 1, SDL_WINDOW_FULLSCREEN, &sdl_window, &sdl_renderer),
+	const SDL_WindowFlags flags = SDL_WINDOW_FULLSCREEN * !args.debug;
+	expect(SDL_CreateWindowAndRenderer("dwarfpaper", 1, 1, flags, &sdl_window, &sdl_renderer),
 		"Failed to create the SDL window/renderer!!! %s", SDL_GetError());
 
 	SDL_Rect bounds;
 	SDL_DisplayID sdl_display = SDL_GetPrimaryDisplay();
-	assert(SDL_GetDisplayBounds(sdl_display, &bounds), "Failed to get display bounds");
+	expect(SDL_GetDisplayBounds(sdl_display, &bounds), "Failed to get display bounds");
 	rows = bounds.h / CHR_HEIGHT + 1;
 	cols = bounds.w / CHR_WIDTH + 1;
 
-	assert(SDL_SetWindowPosition(sdl_window, 0, 0), "Failed to set the SDL window position! %s", SDL_GetError());
-	assert(SDL_SetWindowSize(sdl_window, screen_width(), screen_height()), "Failed to set the SDL window size! %s",
+	expect(SDL_SetWindowPosition(sdl_window, 0, 0), "Failed to set the SDL window position! %s", SDL_GetError());
+	expect(SDL_SetWindowSize(sdl_window, screen_width(), screen_height()), "Failed to set the SDL window size! %s",
 		SDL_GetError());
 
-	HWND main_window
-		= SDL_GetPointerProperty(SDL_GetWindowProperties(sdl_window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
-	SetParent(main_window, worker_window);
-	ShowWindow(worker_window, 1); // !!! won't do jackshit without this
+	if (!args.debug) {
+		HWND main_window = SDL_GetPointerProperty(
+			SDL_GetWindowProperties(sdl_window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+		SetParent(main_window, worker_window);
+		ShowWindow(worker_window, 1); // !!! won't do jackshit without this
+	}
 
 	int d1, d2, n;
 	uint8_t* vga_data = stbi_load("9x16.png", &d1, &d2, &n, 4);
-	assert(vga_data != NULL, "Failed to load the VGA 9x16 font PNG");
+	expect(vga_data != NULL, "Failed to load the VGA 9x16 font PNG");
 
 	SDL_Surface* vga_surface = SDL_CreateSurfaceFrom(144, 256, SDL_PIXELFORMAT_RGBA8888, vga_data, 144 * 4);
-	assert(vga_surface != NULL, "Failed to create the VGA 9x16 font surface!!! %s", SDL_GetError());
+	expect(vga_surface != NULL, "Failed to create the VGA 9x16 font surface!!! %s", SDL_GetError());
 
 	vga_texture = SDL_CreateTextureFromSurface(sdl_renderer, vga_surface);
-	assert(vga_texture != NULL, "Failed to load the VGA 9x16 font texture!!! %s", SDL_GetError());
+	expect(vga_texture != NULL, "Failed to load the VGA 9x16 font texture!!! %s", SDL_GetError());
 
 	info("Running...");
 
@@ -179,16 +183,18 @@ int main(__attribute__((unused)) int argc, __attribute__((unused)) char* argv[])
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_EVENT_QUIT)
 				goto cleanup;
+			if (args.debug && event.type == SDL_EVENT_KEY_DOWN && event.key.scancode == SDL_SCANCODE_ESCAPE)
+				goto cleanup;
 			if (event.type != SDL_EVENT_WINDOW_RESIZED)
 				continue;
 
-			assert(SDL_GetDisplayBounds(sdl_display, &bounds), "Failed to get display bounds");
+			expect(SDL_GetDisplayBounds(sdl_display, &bounds), "Failed to get display bounds");
 			rows = bounds.h / CHR_HEIGHT + 1;
 			cols = bounds.w / CHR_WIDTH + 1;
 
 			double_buf = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
 				screen_width(), screen_height());
-			assert(double_buf != NULL, "Failed to create the front-buffer texture!!! %s", SDL_GetError());
+			expect(double_buf != NULL, "Failed to create the front-buffer texture!!! %s", SDL_GetError());
 
 			for (int i = 0; i < MAX_WIDTH * MAX_HEIGHT; i++) {
 				back_buf[i].chr = 0;
