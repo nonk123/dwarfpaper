@@ -39,14 +39,9 @@ add_library(noise ${noise_SOURCE_DIR}/open-simplex-noise.c
                   ${noise_SOURCE_DIR}/open-simplex-noise.h)
 target_include_directories(noise PUBLIC ${noise_SOURCE_DIR})
 
-add_executable(dwarfpaper ${SOURCES} ${HEADERS})
+add_executable(dwarfpaper ${SOURCES} ${HEADERS} ${SRC_DIR}/vga9x16.rc)
 target_link_libraries(dwarfpaper PRIVATE SDL3-static noise)
 target_include_directories(dwarfpaper PRIVATE ${SRC_DIR} ${stb_SOURCE_DIR})
 target_compile_definitions(dwarfpaper PRIVATE _CRT_SECURE_NO_WARNINGS=1)
 #target_link_options(dwarfpaper PRIVATE $<IF:$<BOOL:${MSVC}>,/SUBSYSTEM:WINDOWS,-mwindows>)
 target_link_libraries(dwarfpaper PRIVATE user32.lib)
-
-set(ASSETS_DIR ${PROJECT_SOURCE_DIR}/assets)
-add_custom_command(
-    TARGET dwarfpaper POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${ASSETS_DIR} $<TARGET_FILE_DIR:dwarfpaper>)

@@ -21,6 +21,7 @@
 #include "log.h"
 #include "modes.h"
 #include "screen.h"
+#include "vga9x16.h"
 
 static HWND worker_window = NULL;
 static SDL_Window* sdl_window = NULL;
@@ -122,6 +123,25 @@ int screen_cols() {
 	return cols;
 }
 
+static uint64_t vga9x16_size = 0;
+static uint8_t vga9x16[8 * 1024] = {0};
+
+static void load_9x16_png() {
+	HRSRC hRes = FindResource(NULL, MAKEINTRESOURCE(VGA9X16), RT_RCDATA);
+	expect(hRes != NULL, "Failed to find the embedded 9x16.png");
+
+	vga9x16_size = SizeofResource(NULL, hRes);
+	expect(vga9x16_size, "Failed to identify the size of the embedded 9x16.png");
+
+	HGLOBAL hData = LoadResource(NULL, hRes);
+	expect(hData != NULL, "Failed to load the embedded 9x16.png");
+
+	const uint8_t* pData = (uint8_t*)(LockResource(hData));
+	expect(pData != NULL, "Failed to lock the embedded 9x16.png data");
+
+	SDL_memcpy(vga9x16, pData, vga9x16_size);
+}
+
 static int handle_events(SDL_DisplayID sdl_display) {
 	SDL_Rect bounds = {0};
 	SDL_Event event = {0};
@@ -184,8 +204,9 @@ int main(int argc, char* argv[]) {
 		ShowWindow(worker_window, 1); // !!! won't do jackshit without this
 	}
 
+	load_9x16_png();
 	int d1, d2, n, ch = 4;
-	uint8_t* vga_data = stbi_load("9x16.png", &d1, &d2, &n, ch);
+	uint8_t* vga_data = stbi_load_from_memory(vga9x16, (int)vga9x16_size, &d1, &d2, &n, ch);
 	expect(vga_data != NULL, "Failed to load the VGA 9x16 font PNG");
 
 	SDL_Surface* vga_surface = SDL_CreateSurfaceFrom(d1, d2, SDL_PIXELFORMAT_RGBA8888, vga_data, ch * d1);
