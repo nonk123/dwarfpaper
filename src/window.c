@@ -54,10 +54,12 @@ static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 	this->font = SDL_CreateTextureFromSurface(this->renderer, vga9x16());
 	expect(this->font, "Failed to load font PNG into a texture");
 
-	HWND w32_window = SDL_GetPointerProperty(
-		SDL_GetWindowProperties(this->sdl_window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
-	SetParent(w32_window, worker_window);
-	ShowWindow(worker_window, 1); // !!! won't do jackshit without this
+	if (worker_window != NULL) {
+		HWND w32_window = SDL_GetPointerProperty(
+			SDL_GetWindowProperties(this->sdl_window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+		SetParent(w32_window, worker_window);
+		ShowWindow(worker_window, 1); // !!! won't do jackshit without this
+	}
 
 	set_mode(this, args.mode);
 	resize(this, bounds.w, bounds.h);

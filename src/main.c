@@ -20,36 +20,31 @@ static int handle_events() {
 	return 1;
 }
 
-int main(int argc, char* argv[]) {
-	parse_cmdline(argc, argv);
+static uint64_t min_delta() {
+	float hz = 0.f;
+	for (const Window* window = windows(); window != NULL; window = window->next)
+		hz = (window->hz > hz ? window->hz : hz);
+	expect(hz != 0.f, "Seems like no windows were created...");
+	return (uint64_t)(CLOCK_SECOND / hz);
+}
 
+int main_fr() {
 	expect(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS), "SDL_Init failed! %s", SDL_GetError());
 	spawn_windows();
+	const uint64_t target_delta = min_delta();
 
 	info("Running...");
-
-	uint64_t second = 0, fps = 0;
-	float max_hz = 0;
-	for (const Window* window = windows(); window != NULL; window = window->next)
-		if (window->hz > max_hz)
-			max_hz = window->hz;
-	expect(max_hz, "Seems like all windows failed to create...");
-
-	const uint64_t target_delta = (uint64_t)(CLOCK_SECOND / max_hz);
 	for (;;) {
 		const uint64_t frame_start = SDL_GetTicksNS();
-
 		if (!handle_events())
 			break;
 		for (Window* window = windows(); window != NULL; window = window->next)
 			tick(window);
 
-		const uint64_t now = SDL_GetTicksNS();
-		uint64_t delta = now - frame_start;
+		const uint64_t now = SDL_GetTicksNS(), delta = now - frame_start;
 		if (delta < target_delta)
 			SDL_DelayNS(target_delta - delta);
 	}
-
 	info("Goodbye!");
 
 	vga9x16_cleanup();
@@ -57,4 +52,9 @@ int main(int argc, char* argv[]) {
 	SDL_Quit();
 
 	return EXIT_SUCCESS;
+}
+
+int main(int argc, char* argv[]) {
+	parse_cmdline(argc, argv);
+	return main_fr(); // don't want the argc/argv in my scope :angry:
 }
