@@ -2,7 +2,9 @@
 
 A Live wallpaper app that renders classic Dwarf Fortress styled ASCII vomit all over your desktop. Only works on Windows due to the amount of winapi hacks involved. Below is a screenshot of the program in action:
 
-![Screenshot of a Windows 10 desktop with a vibrant ASCII-art pipes-screensaver wallpaper](.github/assets/screenie-1.png)
+![16:9 screenshot of a Windows 10 desktop with a vibrant ASCII-art pipes-screensaver wallpaper](.github/assets/screenie-1.png)
+
+![4:3 screenshot of a Windows 10 desktop with a vibrant ASCII-art pipes-screensaver wallpaper](.github/assets/screenie-2.png)
 
 ## Usage
 
