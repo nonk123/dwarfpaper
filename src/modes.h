@@ -1,12 +1,10 @@
 #pragma once
 
-typedef void (*drawFn)(const void*), (*tickFn)(void*);
-#define MODE_STATE_SIZE (4096)
-
+typedef void (*draw_fn)(const void*), (*tick_fn)(void*);
 typedef struct {
 	const char* name;
-	drawFn draw;
-	tickFn update;
+	draw_fn draw;
+	tick_fn update;
 } mode_table;
 
 void set_mode(const char*);
