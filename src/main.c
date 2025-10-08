@@ -26,35 +26,29 @@ static SDL_Window* sdl_window = NULL;
 static SDL_Renderer* sdl_renderer = NULL;
 static SDL_Texture* vga_texture = NULL;
 
-static SDL_Color colors[16] = {0};
-
 #define FULL (255)
 #define MID (170)
 #define LOW (85)
-static void colors_init() {
-	colors[C_BLACK] = (SDL_Color){0, 0, 0, 255};
-	colors[C_GRAY] = (SDL_Color){LOW, LOW, LOW, 255};
-	colors[C_WHITE] = (SDL_Color){MID, MID, MID, 255};
-	colors[C_BRIGHT_WHITE] = (SDL_Color){FULL, FULL, FULL, 255};
 
-	colors[C_RED] = (SDL_Color){MID, 0, 0, 255};
-	colors[C_BRIGHT_RED] = (SDL_Color){FULL, LOW, LOW, 255};
+static const SDL_Color colors[C_MAX] = {
+	[C_BLACK] = {0,    0,    0,    255},
+	[C_GRAY] = {LOW,  LOW,  LOW,  255},
+	[C_WHITE] = {MID,  MID,  MID,  255},
+	[C_BRIGHT_WHITE] = {FULL, FULL, FULL, 255},
+	[C_RED] = {MID,  0,    0,    255},
+	[C_BRIGHT_RED] = {FULL, LOW,  LOW,  255},
+	[C_GREEN] = {0,    MID,  0,    255},
+	[C_BRIGHT_GREEN] = {LOW,  FULL, LOW,  255},
+	[C_YELLOW] = {FULL, MID,  0,    255},
+	[C_BRIGHT_YELLOW] = {FULL, FULL, LOW,  255},
+	[C_BLUE] = {0,    0,    MID,  255},
+	[C_BRIGHT_BLUE] = {LOW,  LOW,  FULL, 255},
+	[C_PURPLE] = {MID,  0,    MID,  255},
+	[C_BRIGHT_PURPLE] = {FULL, LOW,  FULL, 255},
+	[C_AQUA] = {0,    MID,  MID,  255},
+	[C_BRIGHT_AQUA] = {LOW,  FULL, FULL, 255},
+};
 
-	colors[C_GREEN] = (SDL_Color){0, MID, 0, 255};
-	colors[C_BRIGHT_GREEN] = (SDL_Color){LOW, FULL, LOW, 255};
-
-	colors[C_YELLOW] = (SDL_Color){FULL, MID, 0, 255};
-	colors[C_BRIGHT_YELLOW] = (SDL_Color){FULL, FULL, LOW, 255};
-
-	colors[C_BLUE] = (SDL_Color){0, 0, MID, 255};
-	colors[C_BRIGHT_BLUE] = (SDL_Color){LOW, LOW, FULL, 255};
-
-	colors[C_PURPLE] = (SDL_Color){MID, 0, MID, 255};
-	colors[C_BRIGHT_PURPLE] = (SDL_Color){FULL, LOW, FULL, 255};
-
-	colors[C_AQUA] = (SDL_Color){0, MID, MID, 255};
-	colors[C_BRIGHT_AQUA] = (SDL_Color){LOW, FULL, FULL, 255};
-}
 #undef LOW
 #undef MID
 #undef FULL
@@ -69,46 +63,48 @@ static int find_worker(HWND top_handle, __attribute__((unused)) LPARAM top_param
 static Cell back_buf[MAX_WIDTH * MAX_HEIGHT];
 static SDL_Texture* double_buf = NULL;
 
+static void render_cell(int x, int y) {
+	const Cell* front = cell_at(x, y);
+	Cell* back = cell_at_ex(back_buf, x, y);
+
+	if (!SDL_memcmp(front, back, sizeof(Cell)))
+		return;
+	*back = *front;
+
+	SDL_FRect dest;
+	dest.x = (float)(x * CHR_WIDTH);
+	dest.y = (float)(y * CHR_HEIGHT);
+	dest.w = CHR_WIDTH;
+	dest.h = CHR_HEIGHT;
+
+	SDL_FRect src;
+	src.x = (float)((int)(front->chr % 16) * CHR_WIDTH);
+	src.y = (float)((int)(front->chr / 16) * CHR_HEIGHT);
+	src.w = CHR_WIDTH;
+	src.h = CHR_HEIGHT;
+
+	SDL_Color c = colors[front->bg];
+	SDL_SetRenderDrawColor(sdl_renderer, c.r, c.g, c.b, 255);
+	SDL_RenderFillRect(sdl_renderer, &dest);
+
+	c = colors[front->fg];
+	SDL_SetTextureColorMod(vga_texture, c.r, c.g, c.b);
+	SDL_RenderTexture(sdl_renderer, vga_texture, &src, &dest);
+}
+
 void render() {
 	assert(double_buf != NULL, "`render` called before front-buffer texture was initialized");
 	SDL_SetRenderTarget(sdl_renderer, double_buf);
 
 	for (int y = 0; y < screen_rows(); y++)
-		for (int x = 0; x < screen_cols(); x++) {
-			const Cell* front = cell_at(x, y);
-			Cell* back = cell_at_ex(back_buf, x, y);
-
-			if (!SDL_memcmp(front, back, sizeof(Cell)))
-				continue;
-			*back = *front;
-
-			SDL_FRect dest;
-			dest.x = (float)(x * CHR_WIDTH);
-			dest.y = (float)(y * CHR_HEIGHT);
-			dest.w = CHR_WIDTH;
-			dest.h = CHR_HEIGHT;
-
-			SDL_FRect src;
-			src.x = (float)((int)(front->chr % 16) * CHR_WIDTH);
-			src.y = (float)((int)(front->chr / 16) * CHR_HEIGHT);
-			src.w = CHR_WIDTH;
-			src.h = CHR_HEIGHT;
-
-			SDL_Color c = colors[front->bg];
-			SDL_SetRenderDrawColor(sdl_renderer, c.r, c.g, c.b, 255);
-			SDL_RenderFillRect(sdl_renderer, &dest);
-
-			c = colors[front->fg];
-			SDL_SetTextureColorMod(vga_texture, c.r, c.g, c.b);
-			SDL_RenderTexture(sdl_renderer, vga_texture, &src, &dest);
-		}
-
+		for (int x = 0; x < screen_cols(); x++)
+			render_cell(x, y);
 	SDL_SetRenderTarget(sdl_renderer, NULL);
 
 	SDL_SetRenderDrawColor(sdl_renderer, 0, 0, 0, 255);
 	SDL_RenderClear(sdl_renderer);
 
-	SDL_FRect rect = {0.f, 0.f, (float)screen_width(), (float)screen_height()};
+	const SDL_FRect rect = {0.f, 0.f, (float)screen_width(), (float)screen_height()};
 	SDL_RenderTexture(sdl_renderer, double_buf, &rect, &rect);
 
 	SDL_RenderPresent(sdl_renderer);
@@ -120,8 +116,14 @@ int get_fps() {
 }
 
 static int rows = 0, cols = 0;
+int screen_rows() {
+	return rows;
+}
+int screen_cols() {
+	return cols;
+}
+
 int main(__attribute__((unused)) int argc, __attribute__((unused)) char* argv[]) {
-	colors_init();
 	set_mode("pipes");
 
 	assert(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS), "SDL_Init failed! %s", SDL_GetError());
@@ -133,7 +135,7 @@ int main(__attribute__((unused)) int argc, __attribute__((unused)) char* argv[])
 	EnumWindows(find_worker, 0);
 	assert(worker_window != NULL, "Failed to find the Worker window!!!");
 
-	RECT rect;
+	RECT rect = {0};
 	GetWindowRect(worker_window, &rect);
 
 	assert(SDL_CreateWindowAndRenderer("dwarfpaper", 1, 1, SDL_WINDOW_FULLSCREEN, &sdl_window, &sdl_renderer),
@@ -228,12 +230,4 @@ cleanup:
 	SDL_Quit();
 
 	return EXIT_SUCCESS;
-}
-
-int screen_cols() {
-	return cols;
-}
-
-int screen_rows() {
-	return rows;
 }
