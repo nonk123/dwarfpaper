@@ -14,7 +14,9 @@ static int handle_events() {
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_EVENT_QUIT)
 			return 0;
-		if (args.debug && event.type == SDL_EVENT_KEY_DOWN && event.key.scancode == SDL_SCANCODE_ESCAPE)
+		if (!args.debug)
+			continue;
+		if (event.type == SDL_EVENT_KEY_DOWN && event.key.scancode == SDL_SCANCODE_ESCAPE)
 			return 0;
 	}
 	return 1;
@@ -25,7 +27,7 @@ static uint64_t min_delta() {
 	for (const Window* window = windows(); window != NULL; window = window->next)
 		hz = (window->hz > hz ? window->hz : hz);
 	expect(hz != 0.f, "Seems like no windows were created...");
-	return (uint64_t)(CLOCK_SECOND / hz);
+	return (uint64_t)(((float)CLOCK_SECOND) / hz);
 }
 
 int main_fr() {
