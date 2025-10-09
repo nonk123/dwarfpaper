@@ -6,7 +6,7 @@
 #include "modes/pipes.h"
 
 ModeTable modes[] = {
-	{"pipes", draw_pipes, update_pipes},
-	{"cave",  draw_cave,  update_cave },
-	{NULL,    NULL,       NULL        },
+	{"pipes", NULL, update_pipes},
+	{"cave",  NULL, update_cave },
+	{NULL,    NULL, NULL        },
 };

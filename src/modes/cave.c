@@ -101,8 +101,6 @@ static void generate(State* this) {
 				place_guy(x, y, rand_bright());
 }
 
-void draw_cave(__attribute__((unused)) const void* _this) {}
-
 void update_cave(void* _this) {
 	State* this = _this;
 	if (!this->initialized || (ticks() - this->last_reset) >= (TICKRATE * RESET_SECS))

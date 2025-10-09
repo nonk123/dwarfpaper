@@ -28,8 +28,6 @@ typedef struct {
 #define MAX_PIPES (13)
 #define MIN_PIPES (6)
 
-void draw_pipes(__attribute__((unused)) const void* _this) {}
-
 void update_pipes(void* _this) {
 	State* this = _this;
 	Pipe* pipes = (Pipe*)(this + 1);

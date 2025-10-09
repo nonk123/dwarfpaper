@@ -136,10 +136,10 @@ static void render_cell(Window* this, int x, int y) {
 }
 
 extern void set_active_window(Window*);
-static void maybe_render(Window* this, Instant now) {
-	if (now - this->last_render < (Instant)(CLOCK_SECOND / this->hz))
+static void maybe_render(Window* this) {
+	if (elapsed() - this->last_render < (Instant)(CLOCK_SECOND / this->hz))
 		return;
-	this->last_render = now;
+	this->last_render = elapsed(), set_active_window(this);
 
 	SDL_Rect bounds = {0};
 	expect(SDL_GetDisplayBounds(this->display, &bounds), "Failed to get display bounds");
@@ -169,28 +169,33 @@ ModeTable* window_mode(Window* this) {
 	fatal("Unknown wallpaper mode: %s", this->mode);
 }
 
-static void maybe_tick(Window* this, Instant now) {
-	if (now - this->last_tick < (Instant)(CLOCK_SECOND / TICKRATE))
-		return;
-	this->last_tick = now;
-	this->ticks++;
-
+static void force_tick(Window* this) {
+	this->last_tick = elapsed(), this->ticks++;
+	set_active_window(this);
 	const ModeTable* mode = window_mode(this);
 	if (mode->update != NULL)
 		mode->update(this->state);
-	mode->draw(this->state);
+	if (mode->draw != NULL)
+		mode->draw(this->state);
+}
+
+static void maybe_tick(Window* this) {
+	if (elapsed() - this->last_tick >= (Instant)(CLOCK_SECOND / TICKRATE))
+		force_tick(this);
 }
 
 static void force_redraw(Window* this) {
 	set_active_window(this);
-	window_mode(this)->draw(this->state);
+	for (int i = 0; i < CELL_COUNT; i++) {
+		Cell* cell = &this->back[i];
+		cell->chr = 0, cell->fg = C_GRAY, cell->bg = C_BLACK;
+	}
+	force_tick(this);
 }
 
 void tick(Window* this) {
-	const Instant now = elapsed();
-	set_active_window(this);
-	maybe_tick(this, now);
-	maybe_render(this, now);
+	maybe_tick(this);
+	maybe_render(this);
 }
 
 void set_window_mode(Window* this, const char* mode) {
@@ -206,11 +211,6 @@ static void resize(Window* this, int new_w, int new_h) {
 	this->canvas
 		= SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, new_w, new_h);
 	expect(this->canvas != NULL, "Failed to create the front-buffer texture!!! %s", SDL_GetError());
-
-	for (int i = 0; i < MAX_WIDTH * MAX_HEIGHT; i++) {
-		Cell* cell = &this->back[i];
-		cell->chr = 0, cell->fg = C_GRAY, cell->bg = C_BLACK;
-	}
 
 	force_redraw(this);
 }
