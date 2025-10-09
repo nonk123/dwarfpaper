@@ -1,6 +1,6 @@
 # dwarfpaper
 
-A Live wallpaper app that renders classic Dwarf Fortress styled ASCII vomit all over your desktop. Only works on Windows due to the amount of winapi hacks involved. Below is a screenshot of the program in action:
+A live wallpaper app that renders classic Dwarf Fortress styled ASCII vomit all over your desktop. Only works on Windows due to the amount of winapi hacks involved. Below are some screenshots of this in action:
 
 ![16:9 screenshot of a Windows 10 desktop with a vibrant ASCII-art pipes-screensaver wallpaper](.github/assets/screenie-1.png)
 
@@ -8,7 +8,7 @@ A Live wallpaper app that renders classic Dwarf Fortress styled ASCII vomit all 
 
 ## Usage
 
-Download [a prebuild binary](https://github.com/nonk123/dwarfpaper/releases#latest) and run it. Use the following command-line options to customize the program's behavior:
+Download [a prebuilt binary](https://github.com/nonk123/dwarfpaper/releases#latest) and run it. Use the following command-line options to customize the program's behavior:
 
 - `-m`/`--mode`: Select one of the supported modes by name. Only `pipes` is available as of now.
 - `-D`/`--debug`: Run the simulation in a separate window rather than as your actual wallpaper. Perfect for one-off tests.
