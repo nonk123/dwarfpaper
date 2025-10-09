@@ -5,7 +5,7 @@
 #define CHR_WIDTH (9)
 #define CHR_HEIGHT (16)
 
-#define MAX_WIDTH (420)
+#define MAX_WIDTH (320)
 #define MAX_HEIGHT (120)
 #define CELL_COUNT (MAX_WIDTH * MAX_HEIGHT)
 
