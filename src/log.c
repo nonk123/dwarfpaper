@@ -31,10 +31,6 @@ static const char* file_basename(const char* path) {
 	return s == NULL ? path : s + 1;
 }
 
-__attribute__((noreturn)) static void die() {
-	exit(EXIT_FAILURE);
-}
-
 void __log(const char* fmt, enum LogLevel level, const char* file, int linum, ...) {
 	static char buf[1024] = {0};
 	if (level < global_log_level)
@@ -48,7 +44,8 @@ void __log(const char* fmt, enum LogLevel level, const char* file, int linum, ..
 
 	fprintf(stdout, "%s\n", buf);
 	fflush(stdout);
+}
 
-	if (level == LOG_FATAL)
-		die();
+void die() {
+	exit(EXIT_FAILURE);
 }
