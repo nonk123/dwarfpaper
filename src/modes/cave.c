@@ -103,8 +103,10 @@ static void generate(State* this) {
 
 void update_cave(void* _this) {
 	State* this = _this;
-	if (!this->initialized || (ticks() - this->last_reset) >= (TICKRATE * RESET_SECS))
+	if (!this->initialized || (ticks() - this->last_reset) >= (TICKRATE * RESET_SECS)) {
 		generate(this);
+		return; // no guy movement for the first tick
+	}
 	for (int y = 0; y < screen_rows(); y++)
 		for (int x = 0; x < visible_cols(); x++)
 			if (is_guy(x, y) && SDL_rand(100) < GUY_MOVE_PROB)
