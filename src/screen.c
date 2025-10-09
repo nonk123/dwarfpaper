@@ -1,6 +1,6 @@
-#include "screen.h"
 #include "colors.h"
 #include "log.h"
+#include "screen.h"
 #include "window.h"
 
 static Window* active_window = NULL;

@@ -1,6 +1,7 @@
 #include <SDL3/SDL_stdinc.h>
 
 #include "modes.h"
+
 #include "modes/cave.h"
 #include "modes/pipes.h"
 
