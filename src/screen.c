@@ -3,7 +3,15 @@
 #include "log.h"
 #include "window.h"
 
-static Cell buf[MAX_WIDTH * MAX_HEIGHT];
+static Window* target_window = NULL;
+
+void set_active_window(Window* window) {
+	target_window = window;
+}
+
+static void expect_window() {
+	expect(target_window, "No window is active");
+}
 
 Cell* cell_at_ex(Cell* ptr, int x, int y) {
 	static Cell deflt = {0, C_GRAY, C_BLACK};
@@ -13,13 +21,8 @@ Cell* cell_at_ex(Cell* ptr, int x, int y) {
 }
 
 Cell* cell_at(int x, int y) {
-	return cell_at_ex(buf, x, y);
-}
-
-static Window* target_window = NULL;
-
-void set_active_window(Window* window) {
-	target_window = window;
+	expect_window();
+	return cell_at_ex(target_window->front_buffer, x, y);
 }
 
 int screen_rows() {
@@ -31,11 +34,11 @@ int screen_cols() {
 }
 
 int screen_width() {
-	expect(target_window, "No window is active");
+	expect_window();
 	return target_window->width;
 }
 
 int screen_height() {
-	expect(target_window, "No window is active");
+	expect_window();
 	return target_window->height;
 }

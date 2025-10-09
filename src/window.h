@@ -9,6 +9,7 @@
 
 typedef struct Window {
 	char mode[128], state[4096];
+	Cell front_buffer[MAX_WIDTH * MAX_HEIGHT];
 	Cell back_buffer[MAX_WIDTH * MAX_HEIGHT];
 	struct Window* next;
 	SDL_Window* sdl_window;
