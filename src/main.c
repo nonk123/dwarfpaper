@@ -1,8 +1,8 @@
+#include <stdlib.h> // for `EXIT_SUCCESS`
+
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL_scancode.h>
 #include <SDL3/SDL_timer.h>
-
-#include <stb_image.h>
 
 #include "clock.h"
 #include "cmdline.h"
