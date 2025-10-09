@@ -45,7 +45,7 @@ void update_pipes(void* _this) {
 			pipes[i].x = SDL_rand(screen_cols());
 			pipes[i].y = SDL_rand(screen_rows());
 			pipes[i].dir = SDL_rand(4) % 4;
-			pipes[i].color = 9 + SDL_rand(7);
+			pipes[i].color = rand_bright();
 		}
 	}
 

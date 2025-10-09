@@ -11,8 +11,12 @@ typedef struct {
 
 #define ITERS (7)
 #define TILE_PROB (47)
-#define RESET_SECS (3)
+#define RESET_SECS (10)
 #define STRIDE (2) // draw tiles 2-wide for a squarer look
+
+#define GUY_PROB (3)
+#define GUY_MOVE_PROB (20)
+#define GUY (2)
 
 static int visible_cols() {
 	return screen_cols() / STRIDE;
@@ -22,6 +26,14 @@ static int is_wall(int x, int y) {
 	x *= STRIDE;
 	const int oob = x < 0 || y < 0 || x >= screen_cols() || y >= screen_rows();
 	return oob || cell_at(x, y)->chr == '#';
+}
+
+static int is_floor(int x, int y) {
+	return cell_at(x * STRIDE, y)->chr == '.';
+}
+
+static int is_guy(int x, int y) {
+	return cell_at(x * STRIDE, y)->chr == GUY;
 }
 
 static int count_adjacent(int x, int y) {
@@ -43,6 +55,18 @@ static void place_wall(int x, int y) {
 
 static void place_floor(int x, int y) {
 	place(x, y, (Cell){.chr = '.', .fg = C_GRAY, .bg = C_BLACK});
+}
+
+static void place_guy(int x, int y, enum Color color) {
+	*cell_at(x * STRIDE, y) = (Cell){.chr = GUY, .fg = color, .bg = C_BLACK};
+}
+
+static void move_guy(int x, int y) {
+	// Immediate placement gives an advantage to guys who are processed first.
+	const int dx = SDL_rand(3) - 1, dy = SDL_rand(3) - 1;
+	const enum Color color = cell_at(x * STRIDE, y)->fg;
+	if (is_floor(x + dx, y + dy))
+		place_floor(x, y), place_guy(x + dx, y + dy, color);
 }
 
 static void iterate() {
@@ -71,6 +95,10 @@ static void generate(State* this) {
 				place_floor(x, y);
 	for (int i = 0; i < ITERS; i++)
 		iterate();
+	for (int y = 0; y < screen_rows(); y++)
+		for (int x = 0; x < visible_cols(); x++)
+			if (is_floor(x, y) && SDL_rand(100) < GUY_PROB)
+				place_guy(x, y, rand_bright());
 }
 
 void draw_cave(__attribute__((unused)) const void* _this) {}
@@ -79,4 +107,8 @@ void update_cave(void* _this) {
 	State* this = _this;
 	if (!this->initialized || (ticks() - this->last_reset) >= (TICKRATE * RESET_SECS))
 		generate(this);
+	for (int y = 0; y < screen_rows(); y++)
+		for (int x = 0; x < visible_cols(); x++)
+			if (is_guy(x, y) && SDL_rand(100) < GUY_MOVE_PROB)
+				move_guy(x, y);
 }

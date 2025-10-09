@@ -24,3 +24,4 @@ enum Color {
 };
 
 extern const SDL_Color colors[C_MAX];
+enum Color rand_bright();
