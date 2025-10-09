@@ -1,4 +1,5 @@
 #include <SDL3/SDL_main.h>
+#include <SDL3/SDL_scancode.h>
 #include <SDL3/SDL_timer.h>
 
 #include <stb_image.h>
@@ -9,15 +10,33 @@
 #include "vga9x16.h"
 #include "window.h"
 
+static void toggle_modes() {
+	for (Window* window = windows(); window != NULL; window = window->next) {
+		ModeTable* mode = window_mode(window) + 1;
+		if (mode->name == NULL)
+			mode = modes;
+		set_window_mode(window, mode->name);
+	}
+}
+
+static void reset_modes() {
+	for (Window* window = windows(); window != NULL; window = window->next)
+		set_window_mode(window, window_mode(window)->name);
+}
+
 static int handle_events() {
 	SDL_Event event = {0};
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_EVENT_QUIT)
 			return 0;
-		if (!args.debug)
+		if (!args.debug || event.type != SDL_EVENT_KEY_DOWN)
 			continue;
-		if (event.type == SDL_EVENT_KEY_DOWN && event.key.scancode == SDL_SCANCODE_ESCAPE)
+		if (event.key.scancode == SDL_SCANCODE_ESCAPE)
 			return 0;
+		else if (event.key.scancode == SDL_SCANCODE_SPACE)
+			toggle_modes();
+		else if (event.key.scancode == SDL_SCANCODE_R)
+			reset_modes();
 	}
 	return 1;
 }

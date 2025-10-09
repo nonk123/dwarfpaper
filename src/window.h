@@ -5,6 +5,7 @@
 #include <SDL3/SDL_video.h>
 
 #include "clock.h"
+#include "modes.h"
 #include "screen.h"
 
 typedef struct Window {
@@ -22,5 +23,6 @@ typedef struct Window {
 } Window;
 
 void spawn_windows(), teardown_windows();
-void set_mode(Window*, const char*), tick(Window*);
+ModeTable* window_mode(Window* this);
+void set_window_mode(Window*, const char*), tick(Window*);
 Window* windows();

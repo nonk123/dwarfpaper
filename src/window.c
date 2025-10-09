@@ -60,7 +60,7 @@ static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 		ShowWindow(worker_window, 1); // !!! won't do jackshit without this
 	}
 
-	set_mode(this, args.mode);
+	set_window_mode(this, args.mode);
 	resize(this, bounds.w, bounds.h);
 }
 
@@ -161,7 +161,7 @@ static void maybe_render(Window* this, Instant now) {
 	SDL_RenderPresent(this->renderer);
 }
 
-static ModeTable* window_mode(Window* this) {
+ModeTable* window_mode(Window* this) {
 	for (ModeTable* ptr = modes; ptr->name != NULL; ptr++)
 		if (!SDL_strncmp(ptr->name, this->mode, sizeof(this->mode)))
 			return ptr;
@@ -192,8 +192,9 @@ void tick(Window* this) {
 	maybe_render(this, now);
 }
 
-void set_mode(Window* this, const char* mode) {
+void set_window_mode(Window* this, const char* mode) {
 	SDL_strlcpy(this->mode, mode, sizeof(this->mode));
+	SDL_memset(this->state, 0, sizeof(this->state));
 }
 
 static void resize(Window* this, int new_w, int new_h) {
