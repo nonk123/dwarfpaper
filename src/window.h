@@ -16,6 +16,7 @@ typedef struct Window {
 	SDL_Texture *canvas, *font;
 	SDL_DisplayID display;
 	Instant last_render, last_tick;
+	Ticks ticks;
 	int width, height;
 	float hz;
 } Window;

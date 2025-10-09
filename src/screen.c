@@ -3,14 +3,14 @@
 #include "log.h"
 #include "window.h"
 
-static Window* target_window = NULL;
+static Window* active_window = NULL;
 
 void set_active_window(Window* window) {
-	target_window = window;
+	active_window = window;
 }
 
 static void expect_window() {
-	expect(target_window, "No window is active");
+	expect(active_window, "No window is active");
 }
 
 Cell* cell_at_ex(Cell* ptr, int x, int y) {
@@ -22,7 +22,7 @@ Cell* cell_at_ex(Cell* ptr, int x, int y) {
 
 Cell* cell_at(int x, int y) {
 	expect_window();
-	return cell_at_ex(target_window->front, x, y);
+	return cell_at_ex(active_window->front, x, y);
 }
 
 int screen_rows() {
@@ -35,10 +35,15 @@ int screen_cols() {
 
 int screen_width() {
 	expect_window();
-	return target_window->width;
+	return active_window->width;
 }
 
 int screen_height() {
 	expect_window();
-	return target_window->height;
+	return active_window->height;
+}
+
+Ticks ticks() {
+	expect_window();
+	return active_window->ticks;
 }

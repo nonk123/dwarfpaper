@@ -20,7 +20,7 @@ typedef struct {
 #define MAX_PIPES (13)
 #define MIN_PIPES (6)
 typedef struct {
-	Instant move_timer, reset_timer;
+	Ticks last_reset;
 	uint8_t pipe_count;
 } State;
 
@@ -39,19 +39,17 @@ void draw_pipes(const void* _this) {
 		clear();
 }
 
-#define MOVE_RATE (60)
 #define TURN_FREQ (20)
 #define RESET_SECS (30)
 
 void update_pipes(void* _this) {
 	State* this = _this;
 	Pipe* pipes = (Pipe*)(this + 1);
-	const Instant now = elapsed();
 
-	if (!this->pipe_count)
-		this->move_timer = now;
-	if (!this->pipe_count || (now - this->reset_timer >= CLOCK_SECOND * RESET_SECS)) {
-		this->reset_timer = now;
+	if ((ticks() - this->last_reset) >= (TICKRATE * RESET_SECS))
+		this->pipe_count = 0;
+	if (!this->pipe_count) {
+		this->last_reset = ticks();
 		clear();
 
 		this->pipe_count = MIN_PIPES + SDL_rand(MAX_PIPES - MIN_PIPES + 1);
@@ -62,10 +60,6 @@ void update_pipes(void* _this) {
 			pipes[i].color = 9 + SDL_rand(7);
 		}
 	}
-
-	if ((now - this->move_timer) < (CLOCK_SECOND / MOVE_RATE))
-		return;
-	this->move_timer = now;
 
 	for (int i = 0; i < this->pipe_count; i++) {
 		Pipe* pipe = &pipes[i];

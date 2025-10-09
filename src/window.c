@@ -24,7 +24,6 @@ static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 		root = this = SDL_malloc(sizeof(Window));
 		expect(this, "Failed to allocate a window");
 		SDL_memset(this, 0, sizeof(*this));
-		this->next = NULL;
 	} else {
 		this = SDL_malloc(sizeof(Window));
 		expect(this, "Failed to allocate a window");
@@ -173,6 +172,7 @@ static void maybe_tick(Window* this, Instant now) {
 	if (now - this->last_tick < (Instant)(CLOCK_SECOND / TICKRATE))
 		return;
 	this->last_tick = now;
+	this->ticks++;
 
 	const ModeTable* mode = window_mode(this);
 	mode->draw(this->state);
