@@ -6,16 +6,28 @@
 
 typedef struct {
 	Ticks last_reset;
-	uint8_t initialized : 1;
+	uint8_t guy_count;
 } State;
 
-#define ITERS (7)
-#define TILE_PROB (47)
-#define RESET_SECS (10)
-#define STRIDE (2) // draw tiles 2-wide for a squarer look
+typedef struct {
+	int x, y;
+	int8_t dir, dist;
+	enum Color color;
+} Guy;
 
-#define GUY_PROB (3)
-#define GUY_MOVE_PROB (20)
+#define STRIDE (2) // draw tiles 2-wide for a squarer look
+#define RESET_SECS (10)
+
+#define TILE_PROB (47)
+#define ITERS (7)
+
+#define MIN_GUYS (30)
+#define MAX_GUYS (50)
+
+#define MIN_DIST (1)
+#define DIST_VARIANCE (4)
+
+#define GUY_MOVE_PROB (8)
 #define GUY (2)
 
 static int visible_cols() {
@@ -61,14 +73,6 @@ static void place_guy(int x, int y, enum Color color) {
 	*cell_at(x * STRIDE, y) = (Cell){.chr = GUY, .fg = color, .bg = C_BLACK};
 }
 
-static void move_guy(int x, int y) {
-	// Immediate placement gives an advantage to guys who are processed first.
-	const int dx = SDL_rand(3) - 1, dy = SDL_rand(3) - 1;
-	const enum Color color = cell_at(x * STRIDE, y)->fg;
-	if (is_floor(x + dx, y + dy))
-		place_floor(x, y), place_guy(x + dx, y + dy, color);
-}
-
 static void iterate() {
 	uint8_t walls[CELL_COUNT] = {0};
 	for (int y = 0; y < screen_rows(); y++)
@@ -83,7 +87,6 @@ static void iterate() {
 }
 
 static void generate(State* this) {
-	this->initialized = 1;
 	this->last_reset = ticks();
 	clear_screen(C_BLACK);
 
@@ -95,20 +98,55 @@ static void generate(State* this) {
 				place_floor(x, y);
 	for (int i = 0; i < ITERS; i++)
 		iterate();
-	for (int y = 0; y < screen_rows(); y++)
-		for (int x = 0; x < visible_cols(); x++)
-			if (is_floor(x, y) && SDL_rand(100) < GUY_PROB)
-				place_guy(x, y, rand_bright());
+
+	Guy* guys = (Guy*)(this + 1);
+	this->guy_count = MIN_GUYS + SDL_rand(MAX_GUYS - MIN_GUYS + 1);
+	int remaining = this->guy_count;
+	while (remaining > 0) {
+		const int x = SDL_rand(visible_cols()), y = SDL_rand(screen_rows());
+		if (!is_floor(x, y))
+			continue;
+		Guy* guy = &guys[--remaining];
+		guy->x = x, guy->y = y, guy->color = rand_bright();
+		guy->dir = guy->dist = 0;
+		place_guy(x, y, guy->color);
+	}
 }
 
+void reroll_direction(Guy* this) {
+	this->dir = (int8_t)(this->dir + SDL_rand(3) - 1);
+	while (this->dir < 0)
+		this->dir += 8;
+	while (this->dir > 7)
+		this->dir -= 8;
+}
+
+static const int8_t dir_x[8] = {1, 1, 0, -1, -1, -1, 0, 1}, dir_y[8] = {0, -1, -1, -1, 0, 1, 1, 1};
 void update_cave(void* _this) {
 	State* this = _this;
-	if (!this->initialized || (ticks() - this->last_reset) >= (TICKRATE * RESET_SECS)) {
+	if (!this->guy_count || (ticks() - this->last_reset) >= (TICKRATE * RESET_SECS)) {
 		generate(this);
 		return; // no guy movement for the first tick
 	}
-	for (int y = 0; y < screen_rows(); y++)
-		for (int x = 0; x < visible_cols(); x++)
-			if (is_guy(x, y) && SDL_rand(100) < GUY_MOVE_PROB)
-				move_guy(x, y);
+	Guy* guys = (Guy*)(this + 1);
+	for (Guy* guy = guys; guy < guys + this->guy_count; guy++) {
+		int max_tries = 10;
+		while (guy->dist && max_tries-- > 0) {
+			const int8_t dx = dir_x[guy->dir], dy = dir_y[guy->dir];
+			if (!is_floor(guy->x + dx, guy->y + dy)) {
+				reroll_direction(guy);
+				continue;
+			}
+			// Immediate placement gives an advantage to guys who are processed first. Just saying.
+			place_floor(guy->x, guy->y);
+			guy->x += dx, guy->y += dy;
+			place_guy(guy->x, guy->y, guy->color);
+			guy->dist--;
+			break;
+		}
+		if (guy->dist || SDL_rand(100) >= GUY_MOVE_PROB)
+			continue;
+		guy->dist = MIN_DIST + SDL_rand(DIST_VARIANCE);
+		reroll_direction(guy);
+	}
 }
