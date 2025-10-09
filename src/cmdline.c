@@ -9,7 +9,6 @@ typedef struct {
 } ArgTable;
 
 static void handle_mode(), handle_debug();
-
 static const ArgTable table[] = {
 	{"-m", "--mode",  handle_mode },
 	{"-D", "--debug", handle_debug},
