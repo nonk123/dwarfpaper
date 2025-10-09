@@ -21,9 +21,8 @@ static void load() {
 	HGLOBAL res_data = LoadResource(NULL, resource);
 	expect(res_data != NULL, "Failed to load the embedded 9x16.png");
 
-	const uint8_t* real_data = (uint8_t*)(LockResource(res_data));
+	const uint8_t* real_data = LockResource(res_data);
 	expect(real_data != NULL, "Failed to lock the embedded 9x16.png data");
-
 	SDL_memcpy(buf, real_data, size);
 
 	int d1, d2, n, ch = 4;

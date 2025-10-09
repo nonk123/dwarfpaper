@@ -9,8 +9,8 @@ typedef struct {
 	uint8_t initialized : 1;
 } State;
 
-#define ITERS (8)
-#define TILE_PROB (50)
+#define ITERS (7)
+#define TILE_PROB (47)
 #define RESET_SECS (3)
 #define STRIDE (2) // draw tiles 2-wide for a squarer look
 
