@@ -92,7 +92,7 @@ static void generate(State* this) {
 
 	for (int y = 0; y < screen_rows(); y++)
 		for (int x = 0; x < visible_cols(); x++)
-			if (SDL_rand(100) < TILE_PROB)
+			if (SDL_rand(100) < TILE_PROB || !x || !y || x == visible_cols() - 1 || y == screen_rows() - 1)
 				place_wall(x, y);
 			else
 				place_floor(x, y);
