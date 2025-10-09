@@ -15,7 +15,7 @@ typedef struct {
 	enum Color color;
 } Guy;
 
-#define STRIDE (2) // draw tiles 2-wide for a squarer look
+#define STRIDE (2) // draw 2-wide tiles for a squarer look
 #define RESET_SECS (10)
 
 #define TILE_PROB (47)
@@ -122,6 +122,26 @@ void reroll_direction(Guy* this) {
 }
 
 static const int8_t dir_x[8] = {1, 1, 0, -1, -1, -1, 0, 1}, dir_y[8] = {0, -1, -1, -1, 0, 1, 1, 1};
+static void move_guy(Guy* this) {
+	if (!this->dist)
+		return;
+
+	int max_tries = 10;
+	while (max_tries-- > 0) {
+		const int8_t dx = dir_x[this->dir], dy = dir_y[this->dir];
+		if (!is_floor(this->x + dx, this->y + dy)) {
+			reroll_direction(this);
+			continue;
+		}
+		// Immediate placement gives an advantage to the guys who are processed first. Just saying.
+		place_floor(this->x, this->y);
+		this->x += dx, this->y += dy;
+		place_guy(this->x, this->y, this->color);
+		this->dist--;
+		break;
+	}
+}
+
 void update_cave(void* _this) {
 	State* this = _this;
 	if (!this->guy_count || (ticks() - this->last_reset) >= (TICKRATE * RESET_SECS)) {
@@ -130,20 +150,7 @@ void update_cave(void* _this) {
 	}
 	Guy* guys = (Guy*)(this + 1);
 	for (Guy* guy = guys; guy < guys + this->guy_count; guy++) {
-		int max_tries = 10;
-		while (guy->dist && max_tries-- > 0) {
-			const int8_t dx = dir_x[guy->dir], dy = dir_y[guy->dir];
-			if (!is_floor(guy->x + dx, guy->y + dy)) {
-				reroll_direction(guy);
-				continue;
-			}
-			// Immediate placement gives an advantage to guys who are processed first. Just saying.
-			place_floor(guy->x, guy->y);
-			guy->x += dx, guy->y += dy;
-			place_guy(guy->x, guy->y, guy->color);
-			guy->dist--;
-			break;
-		}
+		move_guy(guy);
 		if (guy->dist || SDL_rand(100) >= GUY_MOVE_PROB)
 			continue;
 		guy->dist = MIN_DIST + SDL_rand(DIST_VARIANCE);
