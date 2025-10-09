@@ -1,8 +1,5 @@
 #pragma once
 
-#include <SDL3/SDL_stdinc.h>
-#include <stdio.h> // really need this...
-
 enum LogLevel {
 	LOG_TRACE,
 	LOG_DEBUG,
@@ -12,35 +9,17 @@ enum LogLevel {
 	LOG_FATAL,
 };
 
-extern enum LogLevel global_log_level;
-
-#define LOG_OUT (stdout)
-#define __log(level, linum, src_file, msg, ...)                                                                        \
-	do {                                                                                                           \
-		if ((level) < global_log_level)                                                                        \
-			break;                                                                                         \
-		fprintf(LOG_OUT, "%s: [%s:%d] -> " msg "\n", log_level_name((level)), file_basename((src_file)),       \
-			(linum), ##__VA_ARGS__);                                                                       \
-		fflush(LOG_OUT);                                                                                       \
-	} while (0)
-#define _log(level, ...) __log(level, __LINE__, __FILE__, __VA_ARGS__)
+void __log(const char*, enum LogLevel, const char*, int, ...);
+#define _log(level, fmt, ...) __log(fmt, level, __FILE__, __LINE__, ##__VA_ARGS__)
 
 #define trace(...) _log(LOG_TRACE, __VA_ARGS__)
 #define debug(...) _log(LOG_DEBUG, __VA_ARGS__)
 #define info(...) _log(LOG_INFO, __VA_ARGS__)
 #define warn(...) _log(LOG_WARN, __VA_ARGS__)
 #define error(...) _log(LOG_ERROR, __VA_ARGS__)
-#define fatal(...)                                                                                                     \
-	do {                                                                                                           \
-		_log(LOG_FATAL, __VA_ARGS__);                                                                          \
-		commit_seppuku();                                                                                      \
-	} while (0)
+#define fatal(...) _log(LOG_FATAL, __VA_ARGS__);
 #define expect(expr, ...)                                                                                              \
 	do {                                                                                                           \
 		if (!(expr))                                                                                           \
 			fatal(__VA_ARGS__);                                                                            \
 	} while (0)
-
-const char* log_level_name(enum LogLevel);
-const char* file_basename(const char*);
-void commit_seppuku() __attribute__((noreturn));

@@ -1,12 +1,13 @@
+#include <stdio.h> // really can't avoid these two:
 #include <stdlib.h>
 
 #include <SDL3/SDL_stdinc.h>
 
 #include "log.h"
 
-enum LogLevel global_log_level = LOG_INFO;
+static enum LogLevel global_log_level = LOG_INFO;
 
-const char* log_level_name(enum LogLevel level) {
+static const char* log_level_name(enum LogLevel level) {
 	switch (level) {
 		case LOG_TRACE:
 			return "TRACE";
@@ -21,16 +22,33 @@ const char* log_level_name(enum LogLevel level) {
 		case LOG_FATAL:
 			return "FATAL";
 	}
-	commit_seppuku();
 }
 
-const char* file_basename(const char* path) {
+static const char* file_basename(const char* path) {
 	const char* s = SDL_strrchr(path, '/');
 	if (s == NULL)
 		s = SDL_strrchr(path, '\\');
 	return s == NULL ? path : s + 1;
 }
 
-void commit_seppuku() {
+__attribute__((noreturn)) static void die() {
 	exit(EXIT_FAILURE);
+}
+
+void __log(const char* fmt, enum LogLevel level, const char* file, int linum, ...) {
+	static char buf[1024] = {0};
+	if (level < global_log_level)
+		return;
+
+	int count = sprintf(buf, "%s: [%s:%d] -> ", log_level_name(level), file_basename(file), linum);
+	va_list args;
+	va_start(args, linum);
+	vsprintf(buf + count, fmt, args);
+	va_end(args);
+
+	fprintf(stdout, "%s\n", buf);
+	fflush(stdout);
+
+	if (level == LOG_FATAL)
+		die();
 }
