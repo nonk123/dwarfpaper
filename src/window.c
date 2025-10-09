@@ -175,9 +175,9 @@ static void maybe_tick(Window* this, Instant now) {
 	this->ticks++;
 
 	const ModeTable* mode = window_mode(this);
-	mode->draw(this->state);
 	if (mode->update != NULL)
 		mode->update(this->state);
+	mode->draw(this->state);
 }
 
 static void force_redraw(Window* this) {

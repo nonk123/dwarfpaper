@@ -14,9 +14,11 @@ static void expect_window() {
 }
 
 Cell* cell_at_ex(Cell* ptr, int x, int y) {
-	static Cell deflt = {0, C_GRAY, C_BLACK};
-	if (x < 0 || y < 0 || x > screen_cols() || y > screen_rows())
-		return &deflt;
+	static Cell deflt = {0, C_GRAY, C_BLACK}, dummy;
+	if (x < 0 || y < 0 || x > screen_cols() || y > screen_rows()) {
+		dummy = deflt;
+		return &dummy;
+	}
 	return &ptr[y * screen_cols() + x];
 }
 
@@ -46,4 +48,13 @@ int screen_height() {
 Ticks ticks() {
 	expect_window();
 	return active_window->ticks;
+}
+
+void clear_screen(enum Color color) {
+	for (int y = 0; y < screen_rows(); y++)
+		for (int x = 0; x < screen_cols(); x++) {
+			cell_at(x, y)->chr = ' ';
+			cell_at(x, y)->fg = color;
+			cell_at(x, y)->bg = color;
+		}
 }

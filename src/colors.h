@@ -3,7 +3,7 @@
 #include <SDL3/SDL_video.h>
 
 // Straight outta <https://github.com/nonk123/micraneft2>:
-enum {
+enum Color {
 	C_BLACK,
 	C_BLUE,
 	C_GREEN,

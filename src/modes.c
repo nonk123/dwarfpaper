@@ -2,9 +2,9 @@
 
 #include "colors.h"
 #include "modes.h"
-#include "screen.h"
-
+#include "modes/cave.h"
 #include "modes/pipes.h"
+#include "screen.h"
 
 static void draw_jumbled(__attribute__((unused)) const void* _state) {
 	for (int x = 0; x < screen_cols(); x++)
@@ -18,5 +18,6 @@ static void draw_jumbled(__attribute__((unused)) const void* _state) {
 ModeTable modes[] = {
 	{"jumbled", draw_jumbled, NULL        },
 	{"pipes",   draw_pipes,   update_pipes},
+	{"cave",    draw_cave,    update_cave },
 	{NULL,      NULL,         NULL        },
 };

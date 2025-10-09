@@ -1,7 +1,6 @@
 #include <SDL3/SDL_stdinc.h>
 
 #include "clock.h"
-#include "colors.h"
 #include "modes/pipes.h"
 #include "screen.h"
 
@@ -17,30 +16,18 @@ typedef struct {
 	uint8_t dir : 2, color : 4;
 } Pipe;
 
-#define MAX_PIPES (13)
-#define MIN_PIPES (6)
 typedef struct {
 	Ticks last_reset;
 	uint8_t pipe_count;
 } State;
 
-static void clear() {
-	for (int y = 0; y < screen_rows(); y++)
-		for (int x = 0; x < screen_cols(); x++) {
-			cell_at(x, y)->chr = 0;
-			cell_at(x, y)->fg = C_BLACK;
-			cell_at(x, y)->bg = C_BLACK;
-		}
-}
-
-void draw_pipes(const void* _this) {
-	const State* this = _this;
-	if (!this->pipe_count)
-		clear();
-}
-
 #define TURN_FREQ (20)
 #define RESET_SECS (30)
+
+#define MAX_PIPES (13)
+#define MIN_PIPES (6)
+
+void draw_pipes(__attribute__((unused)) const void* _this) {}
 
 void update_pipes(void* _this) {
 	State* this = _this;
@@ -50,7 +37,7 @@ void update_pipes(void* _this) {
 		this->pipe_count = 0;
 	if (!this->pipe_count) {
 		this->last_reset = ticks();
-		clear();
+		clear_screen(C_BLACK);
 
 		this->pipe_count = MIN_PIPES + SDL_rand(MAX_PIPES - MIN_PIPES + 1);
 		for (int i = 0; i < this->pipe_count; i++) {
