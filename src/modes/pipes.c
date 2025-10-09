@@ -1,8 +1,9 @@
 #include <SDL3/SDL_stdinc.h>
 
 #include "clock.h"
-#include "modes/pipes.h"
 #include "screen.h"
+
+#include "modes/pipes.h"
 
 enum {
 	DIR_NORTH,

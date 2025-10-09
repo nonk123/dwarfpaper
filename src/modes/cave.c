@@ -2,6 +2,8 @@
 #include "clock.h"
 #include "screen.h"
 
+#include "modes/cave.h"
+
 typedef struct {
 	Ticks last_reset;
 	uint8_t initialized : 1;
