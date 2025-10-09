@@ -110,7 +110,7 @@ Window* windows() {
 
 static void render_cell(Window* this, int x, int y) {
 	const Cell* front = cell_at(x, y);
-	Cell* back = cell_at_ex(this->back_buffer, x, y);
+	Cell* back = cell_at_ex(this->back, x, y);
 
 	if (!SDL_memcmp(front, back, sizeof(Cell)))
 		return;
@@ -206,7 +206,7 @@ static void resize(Window* this, int new_w, int new_h) {
 	expect(this->canvas != NULL, "Failed to create the front-buffer texture!!! %s", SDL_GetError());
 
 	for (int i = 0; i < MAX_WIDTH * MAX_HEIGHT; i++) {
-		Cell* cell = &this->back_buffer[i];
+		Cell* cell = &this->back[i];
 		cell->chr = 0, cell->fg = C_GRAY, cell->bg = C_BLACK;
 	}
 

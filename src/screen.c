@@ -22,7 +22,7 @@ Cell* cell_at_ex(Cell* ptr, int x, int y) {
 
 Cell* cell_at(int x, int y) {
 	expect_window();
-	return cell_at_ex(target_window->front_buffer, x, y);
+	return cell_at_ex(target_window->front, x, y);
 }
 
 int screen_rows() {
