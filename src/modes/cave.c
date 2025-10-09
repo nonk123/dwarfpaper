@@ -10,8 +10,14 @@ typedef struct {
 #define ITERS (8)
 #define TILE_PROB (50)
 #define RESET_SECS (3)
+#define STRIDE (2) // draw tiles 2-wide for a squarer look
+
+static int visible_cols() {
+	return screen_cols() / STRIDE;
+}
 
 static int is_wall(int x, int y) {
+	x *= STRIDE;
 	const int oob = x < 0 || y < 0 || x >= screen_cols() || y >= screen_rows();
 	return oob || cell_at(x, y)->chr == '#';
 }
@@ -24,27 +30,30 @@ static int count_adjacent(int x, int y) {
 	return count;
 }
 
+static void place(int x, int y, Cell cell) {
+	for (int dx = 0; dx < STRIDE; dx++)
+		*cell_at(x * STRIDE + dx, y) = cell;
+}
+
 static void place_wall(int x, int y) {
-	cell_at(x, y)->chr = '#';
-	cell_at(x, y)->bg = cell_at(x, y)->fg = C_GRAY;
+	place(x, y, (Cell){.chr = '#', .fg = C_GRAY, .bg = C_GRAY});
 }
 
 static void place_floor(int x, int y) {
-	cell_at(x, y)->chr = '.';
-	cell_at(x, y)->fg = C_GRAY;
-	cell_at(x, y)->bg = C_BLACK;
+	place(x, y, (Cell){.chr = '.', .fg = C_GRAY, .bg = C_BLACK});
 }
 
 static void iterate() {
 	uint8_t walls[CELL_COUNT] = {0};
 	for (int y = 0; y < screen_rows(); y++)
-		for (int x = 0; x < screen_cols(); x++)
-			walls[y * screen_cols() + x] = count_adjacent(x, y) >= 5;
-	for (int i = 0; i < CELL_COUNT; i++)
-		if (walls[i])
-			place_wall(i % screen_cols(), i / screen_cols());
-		else
-			place_floor(i % screen_cols(), i / screen_cols());
+		for (int x = 0; x < visible_cols(); x++)
+			walls[y * visible_cols() + x] = count_adjacent(x, y) >= 5;
+	for (int y = 0; y < screen_rows(); y++)
+		for (int x = 0; x < visible_cols(); x++)
+			if (walls[y * visible_cols() + x])
+				place_wall(x, y);
+			else
+				place_floor(x, y);
 }
 
 static void generate(State* this) {
@@ -53,7 +62,7 @@ static void generate(State* this) {
 	clear_screen(C_BLACK);
 
 	for (int y = 0; y < screen_rows(); y++)
-		for (int x = 0; x < screen_cols(); x++)
+		for (int x = 0; x < visible_cols(); x++)
 			if (SDL_rand(100) < TILE_PROB)
 				place_wall(x, y);
 			else
