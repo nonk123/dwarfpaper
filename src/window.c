@@ -8,9 +8,10 @@
 #include "cmdline.h"
 #include "colors.h"
 #include "log.h"
-#include "modes.h"
 #include "vga9x16.h"
 #include "window.h"
+
+#include "modes.h"
 
 static Window* root = NULL;
 static HWND worker_window = NULL;
@@ -188,7 +189,13 @@ static void force_redraw(Window* this) {
 }
 
 void tick(Window* this) {
-	maybe_tick(this);
+	const Instant reset_interval = CLOCK_SECOND * window_mode(this)->reset_secs;
+	if (elapsed() - this->last_reset >= reset_interval) {
+		this->last_reset = elapsed();
+		SDL_memset(this->state, 0, sizeof(this->state));
+		force_redraw(this);
+	} else
+		maybe_tick(this);
 	maybe_render(this);
 }
 

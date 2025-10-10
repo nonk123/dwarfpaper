@@ -5,8 +5,9 @@
 #include <SDL3/SDL_video.h>
 
 #include "clock.h"
-#include "modes.h"
 #include "screen.h"
+
+#include "modes.h"
 
 typedef struct Window {
 	char mode[128], state[4096];
@@ -16,7 +17,7 @@ typedef struct Window {
 	SDL_Renderer* renderer;
 	SDL_Texture *canvas, *font;
 	SDL_DisplayID display;
-	Instant last_render, last_tick;
+	Instant last_render, last_tick, last_reset;
 	Ticks ticks;
 	int width, height;
 	float hz;

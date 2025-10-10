@@ -17,7 +17,6 @@ typedef struct {
 } Guy;
 
 #define STRIDE (2) // draw 2-wide tiles for a squarer look
-#define RESET_SECS (10)
 
 #define TILE_PROB (47)
 #define ITERS (7)
@@ -110,7 +109,7 @@ static void generate(State* this) {
 			continue;
 		Guy* guy = &guys[--remaining];
 		guy->x = x, guy->y = y, guy->color = rand_bright();
-		guy->dir = 0, guy->dist = 0;
+		guy->dir = 0, guy->dist = 0, guy->standing = 0;
 		place_guy(x, y, guy->color);
 	}
 }
@@ -135,7 +134,9 @@ static void move_guy(Guy* this) {
 			this->standing = 0;
 		return;
 	}
-	for (int max_tries = 16; this->dist && max_tries > 0; max_tries--) {
+	if (!this->dist)
+		return;
+	for (int max_tries = 16; max_tries > 0; max_tries--) {
 		const int8_t dx = dir_x[this->dir], dy = dir_y[this->dir];
 		if (!is_floor(this->x + dx, this->y + dy)) {
 			reroll_direction(this);
@@ -152,7 +153,7 @@ static void move_guy(Guy* this) {
 
 void update_cave(void* _this) {
 	State* this = _this;
-	if (!this->guy_count || (ticks() - this->last_reset) >= (TICKRATE * RESET_SECS)) {
+	if (!this->guy_count) {
 		generate(this);
 		return; // no guy movement for the first tick
 	}

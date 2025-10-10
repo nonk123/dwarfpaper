@@ -23,17 +23,12 @@ typedef struct {
 } State;
 
 #define TURN_FREQ (20)
-#define RESET_SECS (30)
-
 #define MAX_PIPES (13)
 #define MIN_PIPES (6)
 
 void update_pipes(void* _this) {
 	State* this = _this;
 	Pipe* pipes = (Pipe*)(this + 1);
-
-	if ((ticks() - this->last_reset) >= (TICKRATE * RESET_SECS))
-		this->pipe_count = 0;
 	if (!this->pipe_count) {
 		this->last_reset = ticks();
 		clear_screen(C_BLACK);
