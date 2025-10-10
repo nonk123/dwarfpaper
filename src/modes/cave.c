@@ -11,7 +11,8 @@ typedef struct {
 
 typedef struct {
 	int x, y;
-	int8_t dir, dist;
+	int8_t dir;
+	uint8_t standing : 1, dist : 7;
 	enum Color color;
 } Guy;
 
@@ -27,7 +28,8 @@ typedef struct {
 #define MIN_DIST (1)
 #define DIST_VARIANCE (4)
 
-#define GUY_MOVE_PROB (8)
+#define GUY_MOVE_FREQ (3)
+#define GUY_STAND_PROB (50)
 #define GUY (2)
 
 static int visible_cols() {
@@ -108,22 +110,32 @@ static void generate(State* this) {
 			continue;
 		Guy* guy = &guys[--remaining];
 		guy->x = x, guy->y = y, guy->color = rand_bright();
-		guy->dir = guy->dist = 0;
+		guy->dir = 0, guy->dist = 0;
 		place_guy(x, y, guy->color);
 	}
 }
 
 void reroll_direction(Guy* this) {
+	if (SDL_rand(100) < GUY_STAND_PROB) {
+		this->standing = 1;
+		return;
+	}
 	this->dir = (int8_t)(this->dir + SDL_rand(3) - 1);
 	while (this->dir < 0)
 		this->dir += 8;
-	while (this->dir > 7)
+	while (this->dir >= 8)
 		this->dir -= 8;
 }
 
-static const int8_t dir_x[8] = {1, 1, 0, -1, -1, -1, 0, 1}, dir_y[8] = {0, -1, -1, -1, 0, 1, 1, 1};
+static const int8_t dir_x[8] = {1, 1, 0, -1, -1, -1, 0, 1}, dir_y[sizeof(dir_x)] = {0, -1, -1, -1, 0, 1, 1, 1};
 static void move_guy(Guy* this) {
-	for (int max_tries = 10; this->dist && max_tries > 0; max_tries--) {
+	if (this->standing) {
+		this->dist--;
+		if (!this->dist)
+			this->standing = 0;
+		return;
+	}
+	for (int max_tries = 16; this->dist && max_tries > 0; max_tries--) {
 		const int8_t dx = dir_x[this->dir], dy = dir_y[this->dir];
 		if (!is_floor(this->x + dx, this->y + dy)) {
 			reroll_direction(this);
@@ -133,8 +145,9 @@ static void move_guy(Guy* this) {
 		place_floor(this->x, this->y);
 		this->x += dx, this->y += dy, this->dist--;
 		place_guy(this->x, this->y, this->color);
-		break;
+		return;
 	}
+	this->dist--;
 }
 
 void update_cave(void* _this) {
@@ -145,8 +158,9 @@ void update_cave(void* _this) {
 	}
 	Guy* guys = (Guy*)(this + 1);
 	for (Guy* guy = guys; guy < guys + this->guy_count; guy++) {
-		move_guy(guy);
-		if (guy->dist || SDL_rand(100) >= GUY_MOVE_PROB)
+		if (!(ticks() % GUY_MOVE_FREQ))
+			move_guy(guy);
+		if (guy->dist)
 			continue;
 		guy->dist = MIN_DIST + SDL_rand(DIST_VARIANCE);
 		reroll_direction(guy);
