@@ -7,7 +7,7 @@
     "cmake.generator": "Ninja",
     "cmake.exportCompileCommandsFile": true,
     "cmake.debugConfig": {
-        "args": ["-D", "-m", "cave"]
+        "args": ["-D", "-m", "forest"]
     },
     "files.exclude": {
         ".cache": true,

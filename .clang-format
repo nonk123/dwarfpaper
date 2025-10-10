@@ -41,8 +41,13 @@ IncludeCategories:
   - Regex: "^<"
     Priority: 50
     CaseSensitive: true
+  - Regex: '^"modes\.h"$'
+    Priority: 110
+    SortPriority: 110
+    CaseSensitive: true
   - Regex: '^"modes/'
     Priority: 110
+    SortPriority: 120
     CaseSensitive: true
   - Regex: ".*"
     Priority: 100
