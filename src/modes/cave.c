@@ -123,11 +123,7 @@ void reroll_direction(Guy* this) {
 
 static const int8_t dir_x[8] = {1, 1, 0, -1, -1, -1, 0, 1}, dir_y[8] = {0, -1, -1, -1, 0, 1, 1, 1};
 static void move_guy(Guy* this) {
-	if (!this->dist)
-		return;
-
-	int max_tries = 10;
-	while (max_tries-- > 0) {
+	for (int max_tries = 10; this->dist && max_tries > 0; max_tries--) {
 		const int8_t dx = dir_x[this->dir], dy = dir_y[this->dir];
 		if (!is_floor(this->x + dx, this->y + dy)) {
 			reroll_direction(this);
@@ -135,9 +131,8 @@ static void move_guy(Guy* this) {
 		}
 		// Immediate placement gives an advantage to the guys who are processed first. Just saying.
 		place_floor(this->x, this->y);
-		this->x += dx, this->y += dy;
+		this->x += dx, this->y += dy, this->dist--;
 		place_guy(this->x, this->y, this->color);
-		this->dist--;
 		break;
 	}
 }

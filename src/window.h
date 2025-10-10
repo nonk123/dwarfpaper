@@ -23,6 +23,6 @@ typedef struct Window {
 } Window;
 
 void spawn_windows(), teardown_windows();
-ModeTable* window_mode(Window* this);
+const ModeTable* window_mode(Window* this);
 void set_window_mode(Window*, const char*), tick(Window*);
 Window* windows();

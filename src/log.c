@@ -32,10 +32,10 @@ static const char* file_basename(const char* path) {
 }
 
 void __log(const char* fmt, enum LogLevel level, const char* file, int linum, ...) {
-	static char buf[1024] = {0};
 	if (level < global_log_level)
 		return;
 
+	static char buf[1024] = {0};
 	int count = sprintf(buf, "%s: [%s:%d] -> ", log_level_name(level), file_basename(file), linum);
 	va_list args;
 	va_start(args, linum);

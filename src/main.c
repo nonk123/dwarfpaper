@@ -12,7 +12,7 @@
 
 static void toggle_modes() {
 	for (Window* window = windows(); window != NULL; window = window->next) {
-		ModeTable* mode = window_mode(window) + 1;
+		const ModeTable* mode = window_mode(window) + 1;
 		if (mode->name == NULL)
 			mode = modes;
 		set_window_mode(window, mode->name);

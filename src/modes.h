@@ -7,4 +7,4 @@ typedef struct {
 	tick_fn update;
 } ModeTable;
 
-extern ModeTable modes[];
+extern const ModeTable modes[];

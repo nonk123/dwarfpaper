@@ -15,7 +15,7 @@
 static Window* root = NULL;
 static HWND worker_window = NULL;
 
-static void resize(Window*, int, int);
+static void maybe_resize(Window*, int, int);
 
 static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 	expect(display != 0, "Tried spawning a window on top of an invalid display");
@@ -62,7 +62,7 @@ static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 	}
 
 	set_window_mode(this, args.mode);
-	resize(this, bounds.w, bounds.h);
+	maybe_resize(this, bounds.w, bounds.h);
 }
 
 __attribute__((stdcall)) static int find_worker(HWND top_handle, __attribute__((unused)) LPARAM top_param) {
@@ -116,15 +116,11 @@ static void render_cell(Window* this, int x, int y) {
 		return;
 	*back = *front;
 
-	SDL_FRect dest = {0};
-	dest.x = (float)(x * CHR_WIDTH);
-	dest.y = (float)(y * CHR_HEIGHT);
-	dest.w = CHR_WIDTH, dest.h = CHR_HEIGHT;
-
-	SDL_FRect src = {0};
+	SDL_FRect src = {0}, dest = {0};
+	dest.x = (float)(x * CHR_WIDTH), dest.y = (float)(y * CHR_HEIGHT);
 	src.x = (float)((int)(front->chr % 16) * CHR_WIDTH);
 	src.y = (float)((int)(front->chr / 16) * CHR_HEIGHT);
-	src.w = CHR_WIDTH, src.h = CHR_HEIGHT;
+	src.w = dest.w = CHR_WIDTH, src.h = dest.h = CHR_HEIGHT;
 
 	SDL_Color c = colors[front->bg];
 	SDL_SetRenderDrawColor(this->renderer, c.r, c.g, c.b, 255);
@@ -139,11 +135,12 @@ extern void set_active_window(Window*);
 static void maybe_render(Window* this) {
 	if (elapsed() - this->last_render < (Instant)(CLOCK_SECOND / this->hz))
 		return;
-	this->last_render = elapsed(), set_active_window(this);
+	this->last_render = elapsed();
+	set_active_window(this);
 
 	SDL_Rect bounds = {0};
 	expect(SDL_GetDisplayBounds(this->display, &bounds), "Failed to get display bounds");
-	resize(this, bounds.w, bounds.h);
+	maybe_resize(this, bounds.w, bounds.h);
 
 	expect(this->canvas, "`render` called before front-buffer texture was initialized");
 	SDL_SetRenderTarget(this->renderer, this->canvas);
@@ -151,19 +148,16 @@ static void maybe_render(Window* this) {
 	for (int y = 0; y < screen_rows(); y++)
 		for (int x = 0; x < screen_cols(); x++)
 			render_cell(this, x, y);
-	SDL_SetRenderTarget(this->renderer, NULL);
 
+	SDL_SetRenderTarget(this->renderer, NULL);
 	SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, 255);
 	SDL_RenderClear(this->renderer);
-
-	const SDL_FRect rect = {0.f, 0.f, (float)screen_width(), (float)screen_height()};
-	SDL_RenderTexture(this->renderer, this->canvas, &rect, &rect);
-
+	SDL_RenderTexture(this->renderer, this->canvas, NULL, NULL);
 	SDL_RenderPresent(this->renderer);
 }
 
-ModeTable* window_mode(Window* this) {
-	for (ModeTable* ptr = modes; ptr->name != NULL; ptr++)
+const ModeTable* window_mode(Window* this) {
+	for (const ModeTable* ptr = modes; ptr->name != NULL; ptr++)
 		if (!SDL_strncmp(ptr->name, this->mode, sizeof(this->mode)))
 			return ptr;
 	fatal("Unknown wallpaper mode: %s", this->mode);
@@ -203,7 +197,7 @@ void set_window_mode(Window* this, const char* mode) {
 	SDL_memset(this->state, 0, sizeof(this->state));
 }
 
-static void resize(Window* this, int new_w, int new_h) {
+static void maybe_resize(Window* this, int new_w, int new_h) {
 	if (this->width == new_w && this->height == new_h)
 		return;
 	this->width = new_w, this->height = new_h;
