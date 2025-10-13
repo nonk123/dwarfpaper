@@ -22,33 +22,25 @@ IndentCaseLabels: true
 AlignAfterOpenBracket: DontAlign
 InsertNewlineAtEOF: true
 InsertBraces: false
-SortIncludes: CaseSensitive
 IncludeBlocks: Regroup
 IncludeIsMainRegex: "a{999}" # no main includes
+SortIncludes: CaseSensitive
 IncludeCategories:
   - Regex: "^<win"
     Priority: 0
-    CaseSensitive: true
   - Regex: "^<std"
     Priority: 5
-    CaseSensitive: true
   - Regex: "^<SDL3/"
     Priority: 10
-    CaseSensitive: true
   - Regex: "^<stb_"
     Priority: 15
-    CaseSensitive: true
   - Regex: "^<"
     Priority: 50
-    CaseSensitive: true
   - Regex: '^"modes\.h"$'
     Priority: 110
     SortPriority: 110
-    CaseSensitive: true
   - Regex: '^"modes/'
     Priority: 110
     SortPriority: 120
-    CaseSensitive: true
   - Regex: ".*"
     Priority: 100
-    CaseSensitive: true
