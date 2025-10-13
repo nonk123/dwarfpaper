@@ -20,10 +20,14 @@ void __log(const char* fmt, enum LogLevel level, const char* file, int linum, ..
 		return;
 
 	static char buf[1024] = {0};
-	int count = sprintf(buf, "%s: [%s:%d] -> ", log_level_names[level], file_basename(file), linum);
+	const char *level_name = log_level_names[level], *filename = file_basename(file);
+	int count = SDL_snprintf(buf, sizeof(buf), "%s: [%s:%d] -> ", level_name, filename, linum);
+	if (count >= sizeof(buf))
+		return;
+
 	va_list args;
 	va_start(args, linum);
-	vsprintf(buf + count, fmt, args);
+	SDL_vsnprintf(buf + count, sizeof(buf) - count, fmt, args);
 	va_end(args);
 
 	fprintf(stdout, "%s\n", buf);
