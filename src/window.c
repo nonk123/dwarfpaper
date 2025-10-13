@@ -188,20 +188,25 @@ static void force_redraw(Window* this) {
 	force_tick(this);
 }
 
+static void reset_window_mode(Window* this) {
+	SDL_memset(this->state, 0, sizeof(this->state));
+	this->last_reset = elapsed();
+}
+
 void tick(Window* this) {
 	const Instant reset_interval = CLOCK_SECOND * window_mode(this)->reset_secs;
 	if (elapsed() - this->last_reset >= reset_interval) {
-		this->last_reset = elapsed();
-		SDL_memset(this->state, 0, sizeof(this->state));
+		reset_window_mode(this);
 		force_redraw(this);
-	} else
+	} else {
 		maybe_tick(this);
+	}
 	maybe_render(this);
 }
 
 void set_window_mode(Window* this, const char* mode) {
 	SDL_strlcpy(this->mode, mode, sizeof(this->mode));
-	SDL_memset(this->state, 0, sizeof(this->state));
+	reset_window_mode(this);
 }
 
 static void maybe_resize(Window* this, int new_w, int new_h) {
