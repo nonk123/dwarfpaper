@@ -42,5 +42,7 @@ IncludeCategories:
   - Regex: '^"modes/'
     Priority: 110
     SortPriority: 120
+  - Regex: '.*\.res\.h.*'
+    Priority: 80
   - Regex: ".*"
     Priority: 100

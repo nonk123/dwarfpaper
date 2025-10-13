@@ -2,9 +2,10 @@
 
 #include <stb_image.h>
 
+#include "vga9x16.res.h"
+
 #include "log.h"
 #include "vga9x16.h"
-#include "vga9x16.res.h"
 
 static SDL_Surface* surface = NULL;
 static uint8_t* image_data = NULL;
