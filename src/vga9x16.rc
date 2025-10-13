@@ -1,2 +1,2 @@
 #include "vga9x16.res.h"
-VGA9X16 RCDATA "9x16.png"
+VGA9X16 RCDATA "vga9x16.png"
