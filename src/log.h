@@ -7,6 +7,7 @@ enum LogLevel {
 	LOG_WARN,
 	LOG_ERROR,
 	LOG_FATAL,
+	LOG_MAX,
 };
 
 __attribute__((noreturn)) void die();

@@ -7,23 +7,6 @@
 
 static enum LogLevel global_log_level = LOG_INFO;
 
-static const char* log_level_name(enum LogLevel level) {
-	switch (level) {
-		case LOG_TRACE:
-			return "TRACE";
-		case LOG_DEBUG:
-			return "DEBUG";
-		case LOG_INFO:
-			return "INFO";
-		case LOG_WARN:
-			return "WARN";
-		case LOG_ERROR:
-			return "ERROR";
-		case LOG_FATAL:
-			return "FATAL";
-	}
-}
-
 static const char* file_basename(const char* path) {
 	const char* s = SDL_strrchr(path, '/');
 	if (s == NULL)
@@ -31,12 +14,13 @@ static const char* file_basename(const char* path) {
 	return s == NULL ? path : s + 1;
 }
 
+static const char* log_level_names[LOG_MAX] = {"TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"};
 void __log(const char* fmt, enum LogLevel level, const char* file, int linum, ...) {
 	if (level < global_log_level)
 		return;
 
 	static char buf[1024] = {0};
-	int count = sprintf(buf, "%s: [%s:%d] -> ", log_level_name(level), file_basename(file), linum);
+	int count = sprintf(buf, "%s: [%s:%d] -> ", log_level_names[level], file_basename(file), linum);
 	va_list args;
 	va_start(args, linum);
 	vsprintf(buf + count, fmt, args);
