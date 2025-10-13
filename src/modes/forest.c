@@ -64,8 +64,7 @@ static void place_log(int x, int y) {
 }
 
 static int height_at(int ix) {
-	const int sloping = 12, breadth = 64;
-	const float x = ((float)ix) / ((float)breadth);
+	const float sloping = 12.f, breadth = 64.f, x = ((float)ix) / breadth;
 	return (int)(sloping * noise_at(x, 0.f));
 }
 
