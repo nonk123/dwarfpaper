@@ -1,10 +1,9 @@
 #pragma once
 
-typedef void (*draw_fn)(const void*), (*tick_fn)(void*);
+typedef void (*UpdateFn)(void*);
 typedef struct {
 	const char* name;
-	draw_fn draw;
-	tick_fn update;
+	UpdateFn update;
 	float reset_secs;
 } ModeTable;
 

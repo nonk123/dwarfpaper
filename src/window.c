@@ -22,19 +22,10 @@ extern void set_active_window(Window*);
 static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 	expect(display != 0, "Tried spawning a window on top of an invalid display");
 
-	Window* this = NULL;
-	if (root) {
-		this = SDL_malloc(sizeof(Window));
-		expect(this, "Failed to allocate a window");
-		SDL_memset(this, 0, sizeof(*this));
-		this->next = root;
-		root = this;
-	} else {
-
-		root = this = SDL_malloc(sizeof(Window));
-		expect(this, "Failed to allocate a window");
-		SDL_memset(this, 0, sizeof(*this));
-	}
+	Window* this = SDL_malloc(sizeof(Window));
+	expect(this, "Failed to allocate a window");
+	SDL_memset(this, 0, sizeof(*this));
+	this->next = root, root = this;
 
 	this->display = display, this->last_rendered = elapsed() - CLOCK_SECOND;
 	SDL_strlcpy(this->mode, args.mode, sizeof(this->mode));
@@ -95,11 +86,8 @@ static void teardown_window(Window* this) {
 	if (!this)
 		return;
 	teardown_window(this->next);
-
-	SDL_DestroyTexture(this->font);
-	SDL_DestroyTexture(this->canvas);
-	SDL_DestroyRenderer(this->renderer);
-	SDL_DestroyWindow(this->sdl_window);
+	SDL_DestroyTexture(this->font), SDL_DestroyTexture(this->canvas);
+	SDL_DestroyRenderer(this->renderer), SDL_DestroyWindow(this->sdl_window);
 }
 
 void teardown_windows() {
@@ -167,8 +155,6 @@ static void force_update(Window* this) {
 	const ModeTable* mode = window_mode(this);
 	if (mode && mode->update)
 		mode->update(this->state);
-	if (mode && mode->draw)
-		mode->draw(this->state);
 }
 
 static void maybe_update(Window* this) {
@@ -178,7 +164,6 @@ static void maybe_update(Window* this) {
 }
 
 static void force_redraw(Window* this) {
-	set_active_window(this);
 	for (int i = 0; i < CELL_COUNT; i++) {
 		Cell* cell = &this->back[i];
 		cell->chr = 0, cell->fg = C_GRAY, cell->bg = C_BLACK;
@@ -213,9 +198,8 @@ static void maybe_resize(Window* this, int new_w, int new_h) {
 		return;
 	this->width = new_w, this->height = new_h;
 
-	this->canvas
-		= SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, new_w, new_h);
+	const int format = SDL_PIXELFORMAT_RGBA8888, access = SDL_TEXTUREACCESS_TARGET;
+	this->canvas = SDL_CreateTexture(this->renderer, format, access, new_w, new_h);
 	expect(this->canvas, "Failed to create the front-buffer texture!!! %s", SDL_GetError());
-
 	force_redraw(this);
 }
