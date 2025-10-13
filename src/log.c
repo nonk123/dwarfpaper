@@ -9,9 +9,9 @@ static enum LogLevel global_log_level = LOG_INFO;
 
 static const char* file_basename(const char* path) {
 	const char* s = SDL_strrchr(path, '/');
-	if (s == NULL)
+	if (!s)
 		s = SDL_strrchr(path, '\\');
-	return s == NULL ? path : s + 1;
+	return s ? s + 1 : path;
 }
 
 static const char* log_level_names[LOG_MAX] = {"TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"};

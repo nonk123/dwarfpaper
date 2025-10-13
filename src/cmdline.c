@@ -30,7 +30,7 @@ static void parse_cmdline_fr() {
 			cur_arg = &table[i_table];
 			if (SDL_strcmp(arg, cur_arg->short_form) && SDL_strcmp(arg, cur_arg->long_form))
 				continue;
-			if (cur_arg->handle != NULL)
+			if (cur_arg->handle)
 				cur_arg->handle();
 			goto next_arg;
 		}

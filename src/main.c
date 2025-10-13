@@ -11,16 +11,16 @@
 #include "window.h"
 
 static void toggle_modes() {
-	for (Window* window = windows(); window != NULL; window = window->next) {
+	for (Window* window = windows(); window; window = window->next) {
 		const ModeTable* mode = window_mode(window) + 1;
-		if (mode->name == NULL)
+		if (!mode->name)
 			mode = modes;
 		set_window_mode(window, mode->name);
 	}
 }
 
 static void reset_modes() {
-	for (Window* window = windows(); window != NULL; window = window->next)
+	for (Window* window = windows(); window; window = window->next)
 		set_window_mode(window, window_mode(window)->name);
 }
 
@@ -43,7 +43,7 @@ static int handle_events() {
 
 static uint64_t min_delta() {
 	float hz = 0.f;
-	for (const Window* window = windows(); window != NULL; window = window->next)
+	for (const Window* window = windows(); window; window = window->next)
 		hz = (window->hz > hz ? window->hz : hz);
 	expect(hz != 0.f, "Seems like no windows were created...");
 	return (uint64_t)(((float)CLOCK_SECOND) / hz);
@@ -59,7 +59,7 @@ int main_fr() {
 		const uint64_t frame_start = SDL_GetTicksNS();
 		if (!handle_events())
 			break;
-		for (Window* window = windows(); window != NULL; window = window->next)
+		for (Window* window = windows(); window; window = window->next)
 			tick(window);
 
 		const uint64_t now = SDL_GetTicksNS(), delta = now - frame_start;

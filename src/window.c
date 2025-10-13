@@ -23,16 +23,17 @@ static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 	expect(display != 0, "Tried spawning a window on top of an invalid display");
 
 	Window* this = NULL;
-	if (root == NULL) {
-		root = this = SDL_malloc(sizeof(Window));
-		expect(this, "Failed to allocate a window");
-		SDL_memset(this, 0, sizeof(*this));
-	} else {
+	if (root) {
 		this = SDL_malloc(sizeof(Window));
 		expect(this, "Failed to allocate a window");
 		SDL_memset(this, 0, sizeof(*this));
 		this->next = root;
 		root = this;
+	} else {
+
+		root = this = SDL_malloc(sizeof(Window));
+		expect(this, "Failed to allocate a window");
+		SDL_memset(this, 0, sizeof(*this));
 	}
 
 	this->display = display, this->last_rendered = elapsed() - CLOCK_SECOND;
@@ -55,7 +56,7 @@ static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 	this->font = SDL_CreateTextureFromSurface(this->renderer, vga9x16());
 	expect(this->font, "Failed to load font PNG into a texture");
 
-	if (worker_window != NULL) {
+	if (worker_window) {
 		SDL_PropertiesID props = SDL_GetWindowProperties(this->sdl_window);
 		HWND w32_window = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 		SetParent(w32_window, worker_window);
@@ -68,7 +69,7 @@ static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 
 __attribute__((stdcall)) static int find_worker(HWND top_handle, __attribute__((unused)) LPARAM top_param) {
 	HWND p = FindWindowEx(top_handle, NULL, "SHELLDLL_DefView", NULL);
-	if (p != NULL)
+	if (p)
 		worker_window = FindWindowEx(NULL, top_handle, "WorkerW", NULL);
 	return 1;
 }
@@ -80,18 +81,18 @@ void spawn_windows() {
 	}
 
 	HWND progman = FindWindow("Progman", NULL);
-	expect(progman != NULL, "Failed to find the Progman window!");
+	expect(progman, "Failed to find the Progman window!");
 
 	SendMessage(progman, 0x052C, 0, 0); // !!! undocumented thingy powering this whole ordeal
 	EnumWindows(find_worker, 0);
-	expect(worker_window != NULL, "Failed to find the Worker window!!!");
+	expect(worker_window, "Failed to find the Worker window!!!");
 
 	for (SDL_DisplayID* display = SDL_GetDisplays(NULL); display && *display; display++)
 		spawn_window(worker_window, *display);
 }
 
 static void teardown_window(Window* this) {
-	if (this == NULL)
+	if (!this)
 		return;
 	teardown_window(this->next);
 
@@ -155,7 +156,7 @@ static void render(Window* this) {
 }
 
 const ModeTable* window_mode(Window* this) {
-	for (const ModeTable* ptr = modes; ptr->name != NULL; ptr++)
+	for (const ModeTable* ptr = modes; ptr->name; ptr++)
 		if (!SDL_strncmp(ptr->name, this->mode, sizeof(this->mode)))
 			return ptr;
 	fatal("Unknown wallpaper mode: %s", this->mode);
@@ -164,9 +165,9 @@ const ModeTable* window_mode(Window* this) {
 static void force_update(Window* this) {
 	set_active_window(this), this->ticks++;
 	const ModeTable* mode = window_mode(this);
-	if (mode->update != NULL)
+	if (mode && mode->update)
 		mode->update(this->state);
-	if (mode->draw != NULL)
+	if (mode && mode->draw)
 		mode->draw(this->state);
 }
 
@@ -214,7 +215,7 @@ static void maybe_resize(Window* this, int new_w, int new_h) {
 
 	this->canvas
 		= SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, new_w, new_h);
-	expect(this->canvas != NULL, "Failed to create the front-buffer texture!!! %s", SDL_GetError());
+	expect(this->canvas, "Failed to create the front-buffer texture!!! %s", SDL_GetError());
 
 	force_redraw(this);
 }
