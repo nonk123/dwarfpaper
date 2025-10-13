@@ -17,6 +17,7 @@ static Window* root = NULL;
 static HWND worker_window = NULL;
 
 static void maybe_resize(Window*, int, int);
+extern void set_active_window(Window*);
 
 static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 	expect(display != 0, "Tried spawning a window on top of an invalid display");
@@ -35,7 +36,7 @@ static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 	}
 
 	this->display = display;
-	this->last_render = elapsed() - CLOCK_SECOND, this->last_tick = this->last_render;
+	this->last_rendered = elapsed() - CLOCK_SECOND;
 	SDL_strlcpy(this->mode, args.mode, sizeof(this->mode));
 
 	expect(SDL_CreateWindowAndRenderer("dwarfpaper", 1, 1, 0, &this->sdl_window, &this->renderer),
@@ -132,11 +133,10 @@ static void render_cell(Window* this, int x, int y) {
 	SDL_RenderTexture(this->renderer, this->font, &src, &dest);
 }
 
-extern void set_active_window(Window*);
 static void maybe_render(Window* this) {
-	if (elapsed() - this->last_render < (Instant)(CLOCK_SECOND / this->hz))
+	if (elapsed() - this->last_rendered < (Instant)(CLOCK_SECOND / this->hz))
 		return;
-	this->last_render = elapsed();
+	this->last_rendered = elapsed();
 	set_active_window(this);
 
 	SDL_Rect bounds = {0};
@@ -165,8 +165,7 @@ const ModeTable* window_mode(Window* this) {
 }
 
 static void force_tick(Window* this) {
-	this->last_tick = elapsed(), this->ticks++;
-	set_active_window(this);
+	set_active_window(this), this->ticks++;
 	const ModeTable* mode = window_mode(this);
 	if (mode->update != NULL)
 		mode->update(this->state);
@@ -175,7 +174,8 @@ static void force_tick(Window* this) {
 }
 
 static void maybe_tick(Window* this) {
-	if (elapsed() - this->last_tick >= (Instant)(CLOCK_SECOND / TICKRATE))
+	const uint64_t targetTicks = ((elapsed() - this->last_reset) * TICKRATE) / CLOCK_SECOND;
+	while (this->ticks < targetTicks)
 		force_tick(this);
 }
 
@@ -190,7 +190,7 @@ static void force_redraw(Window* this) {
 
 static void reset_window_mode(Window* this) {
 	SDL_memset(this->state, 0, sizeof(this->state));
-	this->last_reset = elapsed();
+	this->last_reset = elapsed(), this->ticks = 0;
 }
 
 void tick(Window* this) {

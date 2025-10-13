@@ -17,7 +17,7 @@ typedef struct Window {
 	SDL_Renderer* renderer;
 	SDL_Texture *canvas, *font;
 	SDL_DisplayID display;
-	Instant last_render, last_tick, last_reset;
+	Instant last_reset, last_rendered;
 	Ticks ticks;
 	int width, height;
 	float hz;
