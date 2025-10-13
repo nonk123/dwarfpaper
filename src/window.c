@@ -35,8 +35,7 @@ static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 		root = this;
 	}
 
-	this->display = display;
-	this->last_rendered = elapsed() - CLOCK_SECOND;
+	this->display = display, this->last_rendered = elapsed() - CLOCK_SECOND;
 	SDL_strlcpy(this->mode, args.mode, sizeof(this->mode));
 
 	expect(SDL_CreateWindowAndRenderer("dwarfpaper", 1, 1, 0, &this->sdl_window, &this->renderer),
@@ -57,14 +56,14 @@ static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 	expect(this->font, "Failed to load font PNG into a texture");
 
 	if (worker_window != NULL) {
-		HWND w32_window = SDL_GetPointerProperty(
-			SDL_GetWindowProperties(this->sdl_window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+		SDL_PropertiesID props = SDL_GetWindowProperties(this->sdl_window);
+		HWND w32_window = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 		SetParent(w32_window, worker_window);
 		ShowWindow(worker_window, 1); // !!! won't do jackshit without this
 	}
 
 	set_window_mode(this, args.mode);
-	maybe_resize(this, bounds.w, bounds.h);
+	maybe_resize(this, bounds.w, bounds.h); // the display size needs to be known before the first update
 }
 
 __attribute__((stdcall)) static int find_worker(HWND top_handle, __attribute__((unused)) LPARAM top_param) {
@@ -133,9 +132,7 @@ static void render_cell(Window* this, int x, int y) {
 	SDL_RenderTexture(this->renderer, this->font, &src, &dest);
 }
 
-static void maybe_render(Window* this) {
-	if (elapsed() - this->last_rendered < (Instant)(CLOCK_SECOND / this->hz))
-		return;
+static void render(Window* this) {
 	this->last_rendered = elapsed();
 	set_active_window(this);
 
@@ -164,7 +161,7 @@ const ModeTable* window_mode(Window* this) {
 	fatal("Unknown wallpaper mode: %s", this->mode);
 }
 
-static void force_tick(Window* this) {
+static void force_update(Window* this) {
 	set_active_window(this), this->ticks++;
 	const ModeTable* mode = window_mode(this);
 	if (mode->update != NULL)
@@ -173,10 +170,10 @@ static void force_tick(Window* this) {
 		mode->draw(this->state);
 }
 
-static void maybe_tick(Window* this) {
+static void maybe_update(Window* this) {
 	const uint64_t targetTicks = ((elapsed() - this->last_reset) * TICKRATE) / CLOCK_SECOND;
 	while (this->ticks < targetTicks)
-		force_tick(this);
+		force_update(this);
 }
 
 static void force_redraw(Window* this) {
@@ -185,7 +182,7 @@ static void force_redraw(Window* this) {
 		Cell* cell = &this->back[i];
 		cell->chr = 0, cell->fg = C_GRAY, cell->bg = C_BLACK;
 	}
-	force_tick(this);
+	force_update(this);
 }
 
 static void reset_window_mode(Window* this) {
@@ -194,14 +191,15 @@ static void reset_window_mode(Window* this) {
 }
 
 void tick(Window* this) {
-	const Instant reset_interval = CLOCK_SECOND * window_mode(this)->reset_secs;
+	const Instant reset_interval = CLOCK_SECOND * window_mode(this)->reset_secs,
+		      render_interval = CLOCK_SECOND / this->hz;
 	if (elapsed() - this->last_reset >= reset_interval) {
 		reset_window_mode(this);
 		force_redraw(this);
-	} else {
-		maybe_tick(this);
-	}
-	maybe_render(this);
+	} else
+		maybe_update(this);
+	if (elapsed() - this->last_rendered >= render_interval)
+		render(this);
 }
 
 void set_window_mode(Window* this, const char* mode) {
