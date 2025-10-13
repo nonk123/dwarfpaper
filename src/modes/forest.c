@@ -11,6 +11,7 @@ typedef struct {
 } State;
 
 #define SKY (C_BLACK)
+#define LOG (219)
 
 #define SEED_PROB (8)
 #define SEED_GROW_PROB (3)
@@ -55,6 +56,13 @@ static void drop_seed(int x) {
 	place_seed(x, screen_rows() - 1, seed[0]);
 }
 
+static void place_log(int x, int y) {
+	y = flip(y);
+	cell_at(x, y)->chr = LOG;
+	cell_at(x, y)->fg = C_YELLOW;
+	cell_at(x, y)->bg = SKY;
+}
+
 static int height_at(int ix) {
 	const int sloping = 12, breadth = 64;
 	const float x = ((float)ix) / ((float)breadth);
@@ -90,6 +98,10 @@ static int is_seed(int x, int y) {
 	return 0;
 }
 
+static int is_log(int x, int y) {
+	return cell_at(x, flip(y))->chr == LOG;
+}
+
 static void move_seed(int x, int y) {
 	if (cell_at(x, flip(y - 1))->chr != ' ')
 		return;
@@ -98,14 +110,13 @@ static void move_seed(int x, int y) {
 }
 
 static void grow_seed(int x, int y) {
-	y = flip(y);
+	const int fy = flip(y);
 	for (int i = 0; i < seed_max - 1; i++)
-		if (seed[i] == cell_at(x, y)->chr) {
-			cell_at(x, y)->chr = seed[i + 1];
+		if (seed[i] == cell_at(x, fy)->chr) {
+			cell_at(x, fy)->chr = seed[i + 1];
 			return;
 		}
-	cell_at(x, y)->chr = '#';
-	cell_at(x, y)->fg = cell_at(x, y)->bg = C_YELLOW;
+	place_log(x, y);
 }
 
 void update_forest(void* _this) {
@@ -114,6 +125,10 @@ void update_forest(void* _this) {
 		generate(this);
 		return;
 	}
+	for (int x = 0; x < screen_cols(); x++)
+		for (int y = screen_rows() - 1; y >= 0; y--)
+			if (is_log(x, y - 1) && SDL_rand(100) < SEED_GROW_PROB)
+				place_log(x, y);
 	for (int x = 0; x < screen_cols(); x++)
 		for (int y = 0; y < screen_rows(); y++)
 			if (is_seed(x, y))
