@@ -6,8 +6,8 @@
 #include "modes/pipes.h"
 
 const ModeTable modes[] = {
-	{"forest", update_forest, 10.f},
-	{"cave",   update_cave,   10.f},
+	{"forest", update_forest, 20.f},
+	{"cave",   update_cave,   20.f},
 	{"pipes",  update_pipes,  30.f},
 	{NULL,     NULL,          0.f },
 };

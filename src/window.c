@@ -16,10 +16,10 @@
 static Window* root = NULL;
 static HWND worker_window = NULL;
 
-static void maybe_resize(Window*, int, int);
+static void resize_canvas(Window*, int, int);
 extern void set_active_window(Window*);
 
-static void spawn_window(HWND worker_window, SDL_DisplayID display) {
+static void spawn_window(SDL_DisplayID display) {
 	expect(display != 0, "Tried spawning a window on top of an invalid display");
 
 	Window* this = SDL_malloc(sizeof(Window));
@@ -55,7 +55,7 @@ static void spawn_window(HWND worker_window, SDL_DisplayID display) {
 	}
 
 	set_window_mode(this, args.mode);
-	maybe_resize(this, bounds.w, bounds.h); // the display size needs to be known before the first update
+	resize_canvas(this, bounds.w, bounds.h); // the display size needs to be known before the first update
 }
 
 __attribute__((stdcall)) static int find_worker(HWND top_handle, __attribute__((unused)) LPARAM top_param) {
@@ -67,7 +67,7 @@ __attribute__((stdcall)) static int find_worker(HWND top_handle, __attribute__((
 
 void spawn_windows() {
 	if (args.debug) {
-		spawn_window(NULL, SDL_GetPrimaryDisplay());
+		spawn_window(SDL_GetPrimaryDisplay());
 		return;
 	}
 
@@ -79,7 +79,7 @@ void spawn_windows() {
 	expect(worker_window, "Failed to find the Worker window!!!");
 
 	for (SDL_DisplayID* display = SDL_GetDisplays(NULL); display && *display; display++)
-		spawn_window(worker_window, *display);
+		spawn_window(*display);
 }
 
 static void teardown_window(Window* this) {
@@ -127,11 +127,9 @@ static void render(Window* this) {
 
 	SDL_Rect bounds = {0};
 	expect(SDL_GetDisplayBounds(this->display, &bounds), "Failed to get display bounds");
-	maybe_resize(this, bounds.w, bounds.h);
+	resize_canvas(this, bounds.w, bounds.h);
 
-	expect(this->canvas, "`render` called before front-buffer texture was initialized");
 	SDL_SetRenderTarget(this->renderer, this->canvas);
-
 	for (int y = 0; y < screen_rows(); y++)
 		for (int x = 0; x < screen_cols(); x++)
 			render_cell(this, x, y);
@@ -159,7 +157,7 @@ static void force_update(Window* this) {
 
 static void maybe_update(Window* this) {
 	const uint64_t targetTicks = ((elapsed() - this->last_reset) * TICKRATE) / CLOCK_SECOND;
-	while (this->ticks < targetTicks)
+	while (ticks() < targetTicks)
 		force_update(this);
 }
 
@@ -193,7 +191,7 @@ void set_window_mode(Window* this, const char* mode) {
 	reset_window_mode(this);
 }
 
-static void maybe_resize(Window* this, int new_w, int new_h) {
+static void resize_canvas(Window* this, int new_w, int new_h) {
 	if (this->width == new_w && this->height == new_h)
 		return;
 	this->width = new_w, this->height = new_h;
