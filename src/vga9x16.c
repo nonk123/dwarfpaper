@@ -1,11 +1,19 @@
 #include <windows.h>
 
-#include <stb_image.h>
+#include <SDL3/SDL_stdinc.h>
 
 #include "vga9x16.res.h"
 
 #include "log.h"
 #include "vga9x16.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#define STBI_MALLOC SDL_malloc
+#define STBI_REALLOC SDL_realloc
+#define STBI_FREE SDL_free
+#define STBI_ASSERT(expr) expect((expr), "stb_image assertion failed")
+#define STBI_NO_LINEAR
+#include <stb_image.h>
 
 static SDL_Surface* surface = NULL;
 static uint8_t* image_data = NULL;
