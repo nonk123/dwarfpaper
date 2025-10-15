@@ -19,13 +19,9 @@ void __log(const char*, enum LogLevel, const char*, int, ...);
 #define info(...) _log(LOG_INFO, __VA_ARGS__)
 #define warn(...) _log(LOG_WARN, __VA_ARGS__)
 #define error(...) _log(LOG_ERROR, __VA_ARGS__)
-#define fatal(...)                                                                                                     \
-	do {                                                                                                           \
-		_log(LOG_FATAL, __VA_ARGS__);                                                                          \
-		die();                                                                                                 \
-	} while (0);
-#define expect(expr, ...)                                                                                              \
+#define fatal(...) _log(LOG_FATAL, __VA_ARGS__), die();
+#define expect(expr, msg, ...)                                                                                         \
 	do {                                                                                                           \
 		if (!(expr))                                                                                           \
-			fatal(__VA_ARGS__);                                                                            \
+			_log(LOG_FATAL, "Assertion " #expr " failed. " msg, ##__VA_ARGS__), die();                     \
 	} while (0)
