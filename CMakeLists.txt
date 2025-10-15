@@ -53,10 +53,11 @@ set(SDL_STATIC TRUE)
 add_library(noise ${noise_SOURCE_DIR}/open-simplex-noise.c
                   ${noise_SOURCE_DIR}/open-simplex-noise.h)
 target_include_directories(noise PUBLIC ${noise_SOURCE_DIR})
+target_compile_definitions(noise PUBLIC OSNFLOAT=float)
 
 add_executable(dwarfpaper ${SOURCES} ${HEADERS} ${SRC_DIR}/vga9x16.rc)
 target_link_libraries(dwarfpaper PRIVATE SDL3-static noise)
 target_include_directories(dwarfpaper PRIVATE ${SRC_DIR} ${stb_SOURCE_DIR})
-target_compile_definitions(dwarfpaper PRIVATE _CRT_SECURE_NO_WARNINGS=1 OSNFLOAT=float)
+target_compile_definitions(dwarfpaper PRIVATE _CRT_SECURE_NO_WARNINGS=1)
 #target_link_options(dwarfpaper PRIVATE $<IF:$<BOOL:${MSVC}>,/SUBSYSTEM:WINDOWS,-mwindows>)
 target_link_libraries(dwarfpaper PRIVATE user32.lib)
