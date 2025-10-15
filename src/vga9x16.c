@@ -11,7 +11,7 @@
 #define STBI_MALLOC SDL_malloc
 #define STBI_REALLOC SDL_realloc
 #define STBI_FREE SDL_free
-#define STBI_ASSERT(expr) expect((expr), "stb_image assertion failed")
+#define STBI_ASSERT(expr) expect((expr), "stb_image is at fault")
 #define STBI_NO_LINEAR
 #include <stb_image.h>
 
