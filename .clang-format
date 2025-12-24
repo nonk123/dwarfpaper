@@ -9,9 +9,10 @@ BreakBeforeBinaryOperators: All
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterControlStatement: MultiLine
+SpaceAfterCStyleCast: false
 DerivePointerAlignment: false
 PointerAlignment: Left
-AllowShortBlocksOnASingleLine: Empty
+AllowShortBlocksOnASingleLine: Always
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Empty
@@ -19,10 +20,12 @@ AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
 AccessModifierOffset: -8
-IndentCaseLabels: true
+IndentCaseBlocks: false
+IndentCaseLabels: false
 AlignAfterOpenBracket: DontAlign
 InsertNewlineAtEOF: true
 InsertBraces: false
+RemoveBracesLLVM: true
 IncludeBlocks: Regroup
 IncludeIsMainRegex: "a{999}" # no main includes
 SortIncludes: CaseSensitive
