@@ -68,7 +68,7 @@ jobs:
       - name: Rename binary
         run: cp build/dwarfpaper.exe $OUTFILE
       - name: Release ${{ github.ref_name == 'master' && 'dev' || github.ref_name }} build for ${{ matrix.name }}
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name == 'master' && 'dev' || github.ref_name }}
           files: ${{ env.OUTFILE }}
